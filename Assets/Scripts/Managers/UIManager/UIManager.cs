@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+
 namespace GameCore.Core
 {
     /// <summary>
@@ -11,6 +12,7 @@ namespace GameCore.Core
     /// </summary>
     public class UIManager : MonoBehaviour, IService, IInitializable
     {
+        private InputSchemeManager inputSchemeManager;
         public static UIManager Instance { get; private set; }
 
         [Header("UI Префаби Панелей")]
@@ -42,10 +44,8 @@ namespace GameCore.Core
             }
 
             Instance = this;
-         
 
-           
-
+            inputSchemeManager = FindFirstObjectByType<InputSchemeManager>();
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
@@ -123,11 +123,9 @@ namespace GameCore.Core
                 return null;
             }
 
-            // FADE OUT → затемнення перед будь-якими діями
             if (fadeController != null && withAnimation)
                 await fadeController.FadeToBlack();
 
-            // Створення або отримання панелі
             UIPanel panel = GetOrCreatePanelInstance(panelPrefab);
             if (panel == null)
             {
@@ -135,7 +133,6 @@ namespace GameCore.Core
                 return null;
             }
 
-            // Приховуємо поточну панель
             if (_currentPanel != null && _currentPanel != panel)
             {
                 if (withAnimation)
@@ -144,20 +141,26 @@ namespace GameCore.Core
                     _currentPanel.Hide();
             }
 
-            // Показуємо нову панель
             if (withAnimation)
                 await panel.ShowAnimated();
             else
                 panel.Show();
 
-            // FADE IN → проявляємо нову панель плавно
             if (fadeController != null && withAnimation)
                 await fadeController.FadeFromBlack();
 
             _currentPanel = panel;
 
-            EventBus.Emit("UI/PanelChanged", panel.PanelName);
+            // 🧠 Перемикаємо карту інпутів
+            if (inputSchemeManager != null)
+            {
+                if (panel.PanelName != "GameplayPanel")
+                    inputSchemeManager.SwitchToUI();
+                else
+                    inputSchemeManager.SwitchToGameplay();
+            }
 
+            EventBus.Emit("UI/PanelChanged", panel.PanelName);
             return panel;
         }
 
@@ -211,6 +214,7 @@ namespace GameCore.Core
             return uiPanel;
         }
 
+        // 🔄 оновлений HideAll()
         public void HideAll()
         {
             foreach (var panel in _panelInstances.Values)
@@ -220,6 +224,10 @@ namespace GameCore.Core
             }
 
             _currentPanel = null;
+
+            // 🧠 Якщо приховали всі панелі — повертаємось до геймплею
+            if (inputSchemeManager != null)
+                inputSchemeManager.SwitchToGameplay();
         }
 
         public UIPanel GetCurrentPanel()
