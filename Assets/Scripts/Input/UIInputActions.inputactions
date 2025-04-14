@@ -60,15 +60,6 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "ScrollWheel",
-                    "type": "PassThrough",
-                    "id": "d708ba58-3280-4356-a36d-d5b0b4c385e8",
-                    "expectedControlType": "Double",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": true
-                },
-                {
                     "name": "MiddleClick",
                     "type": "PassThrough",
                     "id": "518d7af1-40bc-4051-8e44-52a7c8e5ec43",
@@ -318,17 +309,6 @@
                     "processors": "",
                     "groups": ";Keyboard&Mouse",
                     "action": "Cancel",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "9c4ce363-afae-48ec-a566-e88b2fd42d2c",
-                    "path": "<Mouse>/scroll/y",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": ";Keyboard&Mouse",
-                    "action": "ScrollWheel",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
