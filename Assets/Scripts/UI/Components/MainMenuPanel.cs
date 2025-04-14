@@ -49,12 +49,14 @@ namespace GameCore.Core
             AudioManager.Instance?.PlaySound("ButtonClick", AudioType.UI);
         }
 
-        private void OnSettingsButtonClicked()
+        private async  void OnSettingsButtonClicked()
         {
             CoreLogger.Log("MainMenu", "Settings button clicked");
 
-            EventBus.Emit("UI/ShowPanel", "SettingsPanel");
+            // Ѕуло так EventBus.Emit("UI/ShowPanel", "SettingsPanel");
             AudioManager.Instance?.PlaySound("ButtonClick", AudioType.UI);
+            await UIManager.Instance.ShowPanelByName("SettingsPanel");
+
         }
 
         private void OnExitButtonClicked()

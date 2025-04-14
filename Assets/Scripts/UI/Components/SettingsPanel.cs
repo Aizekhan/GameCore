@@ -19,16 +19,15 @@ namespace GameCore.Core
 
         private void SetupUI()
         {
-            // Завантажуємо попередні значення
             if (musicSlider != null)
             {
-                musicSlider.value = AudioManager.Instance?.GetVolume(AudioType.Music) ?? 1f;
+                musicSlider.value = AudioManager.Instance?.GetVolumeForType(AudioType.Music) ?? 1f;
                 musicSlider.onValueChanged.AddListener(SetMusicVolume);
             }
 
             if (sfxSlider != null)
             {
-                sfxSlider.value = AudioManager.Instance?.GetVolume(AudioType.SFX) ?? 1f;
+                sfxSlider.value = AudioManager.Instance?.GetVolumeForType(AudioType.SFX) ?? 1f;
                 sfxSlider.onValueChanged.AddListener(SetSfxVolume);
             }
 
@@ -46,10 +45,10 @@ namespace GameCore.Core
             AudioManager.Instance?.SetVolume(AudioType.SFX, value);
         }
 
-        private void OnBackButtonClicked()
+        private async void OnBackButtonClicked()
         {
             AudioManager.Instance?.PlaySound("ButtonClick", AudioType.UI);
-            UIManager.Instance.ShowPanel("MainMenuPanel");
+            await UIManager.Instance.ShowPanelByName("MainMenuPanel");
         }
 
         public override void Show()

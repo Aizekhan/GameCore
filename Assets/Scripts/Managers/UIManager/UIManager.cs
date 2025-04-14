@@ -123,22 +123,19 @@ namespace GameCore.Core
                 return null;
             }
 
-            // Отримуємо або створюємо інстанс панелі
-            UIPanel panel = GetOrCreatePanelInstance(panelPrefab);
+            // FADE OUT → затемнення перед будь-якими діями
+            if (fadeController != null && withAnimation)
+                await fadeController.FadeToBlack();
 
+            // Створення або отримання панелі
+            UIPanel panel = GetOrCreatePanelInstance(panelPrefab);
             if (panel == null)
             {
                 CoreLogger.LogError("UI", $"Failed to create panel from prefab: {panelPrefab.name}");
                 return null;
             }
 
-            // Якщо є fadeController і withAnimation, робимо перехід з затемненням
-            if (fadeController != null && withAnimation)
-            {
-                await fadeController.FadeIn();
-            }
-
-            // Приховуємо поточну панель, якщо вона відрізняється від нової
+            // Приховуємо поточну панель
             if (_currentPanel != null && _currentPanel != panel)
             {
                 if (withAnimation)
@@ -153,18 +150,17 @@ namespace GameCore.Core
             else
                 panel.Show();
 
-            // Якщо був fadeController, прибираємо затемнення
+            // FADE IN → проявляємо нову панель плавно
             if (fadeController != null && withAnimation)
-            {
-                await fadeController.FadeOut();
-            }
+                await fadeController.FadeFromBlack();
 
             _currentPanel = panel;
+
             EventBus.Emit("UI/PanelChanged", panel.PanelName);
 
             return panel;
         }
-       
+
         public async Task<UIPanel> ShowPanelByName(string panelName, bool withAnimation = true)
         {
             // Перевіряємо, чи панель вже створена

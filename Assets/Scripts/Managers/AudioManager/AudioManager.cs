@@ -318,7 +318,7 @@ namespace GameCore.Core
             return oldestSource;
         }
 
-        private float GetVolumeForType(AudioType type)
+        public float GetVolumeForType(AudioType type)
         {
             float volume = settings.masterVolume;
             switch (type)
