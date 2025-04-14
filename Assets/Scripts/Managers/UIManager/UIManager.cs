@@ -42,17 +42,9 @@ namespace GameCore.Core
             }
 
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+         
 
-            if (ServiceLocator.Instance != null)
-            {
-                ServiceLocator.Instance.RegisterService<UIManager>(this).ConfigureAwait(false);
-            }
-            else
-            {
-                CoreLogger.LogWarning("UI", "ServiceLocator not found. UIManager will function in standalone mode.");
-                Initialize().ConfigureAwait(false);
-            }
+           
 
             SceneManager.sceneLoaded += OnSceneLoaded;
         }

@@ -51,16 +51,8 @@ namespace GameCore.Core
             }
 
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+            
 
-            if (ServiceLocator.Instance != null)
-            {
-                ServiceLocator.Instance.RegisterService<SaveManager>(this).ConfigureAwait(false);
-            }
-            else
-            {
-                Initialize().ConfigureAwait(false);
-            }
         }
 
         public async Task Initialize()
