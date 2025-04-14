@@ -63,7 +63,7 @@
                     "name": "ScrollWheel",
                     "type": "PassThrough",
                     "id": "d708ba58-3280-4356-a36d-d5b0b4c385e8",
-                    "expectedControlType": "Vector2",
+                    "expectedControlType": "Double",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true

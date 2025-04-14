@@ -201,7 +201,7 @@ MonoBehaviour:
   mainMenuPanelPrefab: {fileID: 6591778619591907171, guid: 6d1249f3aea183247973620c73ba286c, type: 3}
   loadingPanelPrefab: {fileID: 7595450370887696128, guid: c12aa0d45cc2e9542a4d43ef8c214833, type: 3}
   gameplayPanelPrefab: {fileID: 3189285172567240958, guid: 4350665e3dd8622478d31dcda64fac33, type: 3}
-  settingsPanelPrefab: {fileID: 2545635590172199247, guid: 6cda4419ac5defa45aabf122c077eee9, type: 3}
+  settingsPanelPrefab: {fileID: 2643255325894871721, guid: 6cda4419ac5defa45aabf122c077eee9, type: 3}
   panelParent: {fileID: 6149518895522679800}
   fadeController: {fileID: 7231420199977666223}
 --- !u!1 &2829191410112812162

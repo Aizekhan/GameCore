@@ -19,6 +19,7 @@ namespace GameCore.Core
 
         private void Awake()
         {
+            if (_isInitialized) return;
             if (Instance != null && Instance != this)
             {
                 Destroy(gameObject);
@@ -26,9 +27,10 @@ namespace GameCore.Core
             }
 
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+         
 
             CoreLogger.Log("ServiceLocator initialized");
+            _isInitialized = true;
         }
 
         /// <summary>
