@@ -31,7 +31,8 @@ namespace GameCore.Core
         private void Awake()
         {
             CoreLogger.Log("APP", "Initializing application...");
-
+            // Зберігаємо App між сценами
+            DontDestroyOnLoad(gameObject);
             // Ініціалізуємо базові сервіси
             InitializeServiceLocator();
         }
@@ -55,6 +56,7 @@ namespace GameCore.Core
             if (FindFirstObjectByType<ServiceLocator>() == null)
             {
                 var serviceLocatorGO = Instantiate(serviceLocatorPrefab);
+                serviceLocatorGO.transform.SetParent(transform, false); // Робимо дочірнім об'єктом App
                 var serviceLocator = serviceLocatorGO.GetComponent<ServiceLocator>();
 
                 if (serviceLocator == null)
@@ -91,18 +93,32 @@ namespace GameCore.Core
 
             if (uiManager == null && uiManagerPrefab != null)
             {
+                CoreLogger.Log("APP", "Creating new UIManager");
                 var uiManagerRootGO = Instantiate(uiManagerPrefab);
+                uiManagerRootGO.transform.SetParent(transform, false); // Робимо дочірнім об'єктом App
                 uiManager = uiManagerRootGO.GetComponentInChildren<UIManager>();
+
+                if (uiManager == null)
+                {
+                    CoreLogger.LogError("APP", "UIManager component not found in prefab!");
+                }
             }
 
             if (uiManager != null)
             {
-                await ServiceLocator.Instance.RegisterService<UIManager>(uiManager);
-                CoreLogger.Log("APP", "UIManager initialized");
+                if (!ServiceLocator.Instance.HasService<UIManager>())
+                {
+                    await ServiceLocator.Instance.RegisterService<UIManager>(uiManager);
+                    CoreLogger.Log("APP", "UIManager initialized and registered");
+                }
+                else
+                {
+                    CoreLogger.Log("APP", "UIManager already registered, skipping");
+                }
             }
             else
             {
-                Debug.LogError("Failed to find UIManager component!");
+                CoreLogger.LogError("APP", "Failed to find UIManager component!");
             }
         }
 
@@ -113,6 +129,7 @@ namespace GameCore.Core
             if (audioManager == null && audioManagerPrefab != null)
             {
                 var audioManagerGO = Instantiate(audioManagerPrefab);
+                audioManagerGO.transform.SetParent(transform, false); // Робимо дочірнім об'єктом App
                 audioManager = audioManagerGO.GetComponent<AudioManager>();
             }
 
@@ -138,6 +155,7 @@ namespace GameCore.Core
             if (saveManager == null && saveManagerPrefab != null)
             {
                 var saveManagerGO = Instantiate(saveManagerPrefab);
+                saveManagerGO.transform.SetParent(transform, false); // Робимо дочірнім об'єктом App
                 saveManager = saveManagerGO.GetComponent<SaveManager>();
             }
 

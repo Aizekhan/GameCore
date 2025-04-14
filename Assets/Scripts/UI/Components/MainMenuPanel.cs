@@ -23,6 +23,10 @@ namespace GameCore.Core
 
             // Отримуємо посилання на контролери через ServiceLocator
             menuController = FindFirstObjectByType<MainMenuController>();
+            if (menuController == null)
+            {
+                CoreLogger.LogWarning("MainMenu", "MainMenuController not found!");
+            }
             platformDetector = ServiceLocator.Instance.GetService<PlatformDetector>();
 
             // Підключаємо обробники подій до кнопок

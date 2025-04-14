@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 5267142196001369647}
   - component: {fileID: 3308780354451751396}
-  - component: {fileID: 7319961748990475803}
   m_Layer: 0
   m_Name: App
   m_TagString: Untagged
@@ -51,15 +50,3 @@ MonoBehaviour:
   saveManagerPrefab: {fileID: 6904414081860661260, guid: f9df6c236918cc04ebe852d43249a7a4, type: 3}
   mainMenuSceneName: MainMenu
   automaticallyLoadMainMenu: 1
---- !u!114 &7319961748990475803
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4822008676378975631}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c31d0c696b385d4dbcffe3d037c9e8a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 

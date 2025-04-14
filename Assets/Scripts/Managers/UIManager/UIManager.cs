@@ -92,28 +92,26 @@ namespace GameCore.Core
             await Task.CompletedTask;
         }
 
-        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        private async void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             CoreLogger.Log("UI", $"Scene loaded: {scene.name}");
 
             // Перевіряємо наявність PlayerInput і його поточну карту
-            if (UnityEngine.InputSystem.PlayerInput.all.Count > 0)
+            if (scene.name == "MainMenu" && mainMenuPanelPrefab == null)
             {
-                var currentMap = UnityEngine.InputSystem.PlayerInput.all[0].currentActionMap.name;
-                CoreLogger.Log("UI", $"Active input map: {currentMap}");
+                CoreLogger.LogError("UI", "mainMenuPanelPrefab is null!");
             }
-
             // Показуємо відповідну панель для сцени
             switch (scene.name)
             {
                 case "MainMenu":
-                    ShowPanel(mainMenuPanelPrefab).ConfigureAwait(false);
+                    await ShowPanel(mainMenuPanelPrefab);
                     break;
                 case "LoadingScene":
-                    ShowPanel(loadingPanelPrefab).ConfigureAwait(false);
+                    await ShowPanel(loadingPanelPrefab);
                     break;
                 case "GameScene":
-                    ShowPanel(gameplayPanelPrefab).ConfigureAwait(false);
+                    await ShowPanel(gameplayPanelPrefab);
                     break;
                 case "Startup":
                     // Стартова сцена не потребує UI
