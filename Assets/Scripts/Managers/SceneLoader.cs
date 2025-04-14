@@ -3,48 +3,50 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
-
-public class SceneLoader : MonoBehaviour
+namespace GameCore.Core
 {
-    public static string sceneToLoad = "GameScene";
-
-    [SerializeField] private TextMeshProUGUI loadingText;
-    [SerializeField] private Slider loadingBar;
-
-    private void Start()
+    public class SceneLoader : MonoBehaviour
     {
-        StartCoroutine(LoadTargetScene());
-        StartCoroutine(AnimateLoadingDots());
-    }
+        public static string sceneToLoad = "GameScene";
 
-    IEnumerator LoadTargetScene()
-    {
-        yield return new WaitForSeconds(0.3f);
+        [SerializeField] private TextMeshProUGUI loadingText;
+        [SerializeField] private Slider loadingBar;
 
-        AsyncOperation asyncOp = SceneManager.LoadSceneAsync(sceneToLoad);
-        asyncOp.allowSceneActivation = false;
-
-        while (asyncOp.progress < 0.9f)
+        private void Start()
         {
-            loadingBar.value = asyncOp.progress;
-            yield return null;
+            StartCoroutine(LoadTargetScene());
+            StartCoroutine(AnimateLoadingDots());
         }
 
-        // Останній крок
-        loadingBar.value = 1f;
-        yield return new WaitForSeconds(0.5f);
-        asyncOp.allowSceneActivation = true;
-    }
-
-    IEnumerator AnimateLoadingDots()
-    {
-        string baseText = "Завантаження";
-        while (true)
+        IEnumerator LoadTargetScene()
         {
-            for (int i = 0; i <= 3; i++)
+            yield return new WaitForSeconds(0.3f);
+
+            AsyncOperation asyncOp = SceneManager.LoadSceneAsync(sceneToLoad);
+            asyncOp.allowSceneActivation = false;
+
+            while (asyncOp.progress < 0.9f)
             {
-                loadingText.text = baseText + new string('.', i);
-                yield return new WaitForSeconds(0.4f);
+                loadingBar.value = asyncOp.progress;
+                yield return null;
+            }
+
+            // Останній крок
+            loadingBar.value = 1f;
+            yield return new WaitForSeconds(0.5f);
+            asyncOp.allowSceneActivation = true;
+        }
+
+        IEnumerator AnimateLoadingDots()
+        {
+            string baseText = "Завантаження";
+            while (true)
+            {
+                for (int i = 0; i <= 3; i++)
+                {
+                    loadingText.text = baseText + new string('.', i);
+                    yield return new WaitForSeconds(0.4f);
+                }
             }
         }
     }

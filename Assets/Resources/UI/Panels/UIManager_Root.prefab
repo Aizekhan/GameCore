@@ -201,6 +201,7 @@ MonoBehaviour:
   mainMenuPanelPrefab: {fileID: 6591778619591907171, guid: 6d1249f3aea183247973620c73ba286c, type: 3}
   loadingPanelPrefab: {fileID: 7595450370887696128, guid: c12aa0d45cc2e9542a4d43ef8c214833, type: 3}
   gameplayPanelPrefab: {fileID: 3189285172567240958, guid: 4350665e3dd8622478d31dcda64fac33, type: 3}
+  settingsPanelPrefab: {fileID: 2545635590172199247, guid: 6cda4419ac5defa45aabf122c077eee9, type: 3}
   panelParent: {fileID: 6149518895522679800}
   fadeController: {fileID: 7231420199977666223}
 --- !u!1 &2829191410112812162
@@ -329,7 +330,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8483721904058097222}
-  - component: {fileID: 335730579796113688}
   m_Layer: 0
   m_Name: UIManager_Root
   m_TagString: Untagged
@@ -358,18 +358,6 @@ Transform:
   - {fileID: 5164664326795843278}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &335730579796113688
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5316027076547032678}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c31d0c696b385d4dbcffe3d037c9e8a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &6145273099534018389
 GameObject:
   m_ObjectHideFlags: 0

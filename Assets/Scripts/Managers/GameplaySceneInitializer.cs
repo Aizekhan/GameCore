@@ -1,17 +1,21 @@
 ﻿using UnityEngine;
 
-public class GameplaySceneInitializer : MonoBehaviour
+
+namespace GameCore.Core
 {
-    private void Start()
+    public class GameplaySceneInitializer : MonoBehaviour
     {
-        var inputManager = FindFirstObjectByType<InputSchemeManager>();
-        if (inputManager != null)
+        private void Start()
         {
-            inputManager.SwitchToGameplay();
-        }
-        else
-        {
-            Logger.LogWarning("❌ InputSchemeManager не знайдено!");
+            var inputManager = FindFirstObjectByType<InputSchemeManager>();
+            if (inputManager != null)
+            {
+                inputManager.SwitchToGameplay();
+            }
+            else
+            {
+                CoreLogger.LogWarning("❌ InputSchemeManager не знайдено!");
+            }
         }
     }
 }
