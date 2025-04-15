@@ -209,7 +209,11 @@ namespace GameCore.Core
 
                 handler.onCancel.AddListener(() =>
                 {
-                    UIManager.Instance?.HideAll(); // ⬅️ закриває всі активні панелі
+                    // Якщо відкрита саме SettingsPanel — закриваємо
+                    if (UIManager.Instance?.IsPanelActive("UIPanel_Settings") == true)
+                    {
+                        UIManager.Instance.HideAll();
+                    }
                 });
             }
             else
@@ -226,5 +230,6 @@ namespace GameCore.Core
                 CoreLogger.Log("APP", $"Registered initializable: {initializable.GetType().Name}");
             }
         }
+        
     }
 }

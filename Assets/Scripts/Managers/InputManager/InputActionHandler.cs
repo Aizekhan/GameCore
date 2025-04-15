@@ -25,7 +25,8 @@ namespace GameCore.Core
         {
             CoreLogger.Log("INPUT", "InputActionHandler initialized via IService");
 
-            var inputActions = InputSchemeManager.Instance?.GetComponent<PlayerInput>()?.actions;
+            var inputActions = InputSchemeManager.Instance?.actions;
+
 
             if (inputActions != null)
             {

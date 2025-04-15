@@ -18,6 +18,7 @@ namespace GameCore.Core
 
         public event Action<string> OnControlSchemeChanged;
         public event Action<string> OnActionMapSwitched;
+        public InputActionAsset actions => playerInput?.actions;
 
         private void Awake()
         {

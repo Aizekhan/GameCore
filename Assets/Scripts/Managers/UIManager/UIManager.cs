@@ -1,5 +1,6 @@
 ﻿// Assets/Scripts/Managers/UIManager/UIManager.cs
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -19,7 +20,8 @@ namespace GameCore.Core
         [SerializeField] private GameObject mainMenuPanelPrefab;
         [SerializeField] private GameObject loadingPanelPrefab;
         [SerializeField] private GameObject gameplayPanelPrefab;
-        [SerializeField] private GameObject settingsPanelPrefab;
+        [SerializeField] public GameObject settingsPanelPrefab;
+        private readonly List<GameObject> _activePanels = new List<GameObject>();
 
         [Header("Canvas для UI")]
         [SerializeField] private Transform panelParent; // Сюди інстанціюються панелі (UICanvas_Root)
@@ -292,6 +294,10 @@ namespace GameCore.Core
         public async void ShowSettingsPanel()
         {
             await ShowPanel(settingsPanelPrefab);
+        }
+        public bool IsPanelActive(string panelTag)
+        {
+            return _activePanels.Any(panel => panel != null && panel.CompareTag(panelTag));
         }
 
     }
