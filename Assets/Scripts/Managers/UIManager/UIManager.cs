@@ -13,7 +13,7 @@ namespace GameCore.Core
     /// </summary>
     public class UIManager : MonoBehaviour, IService, IInitializable
     {
-        private InputSchemeManager inputSchemeManager;
+       
         public static UIManager Instance { get; private set; }
 
         [Header("UI Префаби Панелей")]
@@ -21,7 +21,7 @@ namespace GameCore.Core
         [SerializeField] private GameObject loadingPanelPrefab;
         [SerializeField] private GameObject gameplayPanelPrefab;
         [SerializeField] public GameObject settingsPanelPrefab;
-        private readonly List<GameObject> _activePanels = new List<GameObject>();
+      
 
         [Header("Canvas для UI")]
         [SerializeField] private Transform panelParent; // Сюди інстанціюються панелі (UICanvas_Root)
@@ -47,7 +47,7 @@ namespace GameCore.Core
 
             Instance = this;
 
-            inputSchemeManager = FindFirstObjectByType<InputSchemeManager>();
+           
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
@@ -153,17 +153,15 @@ namespace GameCore.Core
 
             _currentPanel = panel;
 
-            // 🧠 Перемикаємо карту інпутів
-            if (inputSchemeManager != null)
-            {
-                if (panel.PanelName != "GameplayPanel")
-                    inputSchemeManager.SwitchToUI();
-                else
-                    inputSchemeManager.SwitchToGameplay();
-            }
-
+           
+            _currentPanel = panel;
             EventBus.Emit("UI/PanelChanged", panel.PanelName);
             return panel;
+        }
+        public async Task FadeToBlack(float duration)
+        {
+            fadeController.fadeDuration = duration;
+            await fadeController.FadeToBlack();
         }
 
         public async Task<UIPanel> ShowPanelByName(string panelName, bool withAnimation = true)
@@ -227,9 +225,7 @@ namespace GameCore.Core
 
             _currentPanel = null;
 
-            // 🧠 Якщо приховали всі панелі — повертаємось до геймплею
-            if (inputSchemeManager != null)
-                inputSchemeManager.SwitchToGameplay();
+            EventBus.Emit("UI/AllPanelsHidden", null);
         }
 
         public UIPanel GetCurrentPanel()
@@ -295,10 +291,7 @@ namespace GameCore.Core
         {
             await ShowPanel(settingsPanelPrefab);
         }
-        public bool IsPanelActive(string panelTag)
-        {
-            return _activePanels.Any(panel => panel != null && panel.CompareTag(panelTag));
-        }
+       
 
     }
 }

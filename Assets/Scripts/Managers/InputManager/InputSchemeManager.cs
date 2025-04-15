@@ -1,11 +1,11 @@
 ﻿using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
-
+using System.Threading.Tasks;
 
 namespace GameCore.Core
 {
-    public class InputSchemeManager : MonoBehaviour
+    public class InputSchemeManager : MonoBehaviour, IService
     {
         public static InputSchemeManager Instance { get; private set; }
 
@@ -43,6 +43,11 @@ namespace GameCore.Core
             {
                 CoreLogger.LogError("INPUT", "PlayerInput not assigned or not found.");
             }
+        }
+        public async Task Initialize()
+        {
+            CoreLogger.Log("INPUT", "InputSchemeManager initialized via IService");
+            await Task.CompletedTask;
         }
 
         private void OnDestroy()

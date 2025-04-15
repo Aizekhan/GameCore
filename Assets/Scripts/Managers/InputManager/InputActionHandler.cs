@@ -85,6 +85,7 @@ namespace GameCore.Core
         private void OnCancel()
         {
             CoreLogger.Log("INPUT", "❌ Cancel action");
+            EventBus.Emit("Input/Cancel", null);
             onCancel?.Invoke();
         }
 

@@ -75,6 +75,7 @@ namespace GameCore.Core
         {
             // Створюємо і реєструємо основні сервіси
             await InitializeUIManager();
+            await InitializeUINavigationService();
             await InitializeAudioManager();
             await InitializeSaveManager();
             await InitializeInputActionHandler();
@@ -209,11 +210,9 @@ namespace GameCore.Core
 
                 handler.onCancel.AddListener(() =>
                 {
-                    // Якщо відкрита саме SettingsPanel — закриваємо
-                    if (UIManager.Instance?.IsPanelActive("UIPanel_Settings") == true)
-                    {
-                        UIManager.Instance.HideAll();
-                    }
+                    // Замість прямої перевірки активності панелі
+                    var navigationService = ServiceLocator.Instance.GetService<UINavigationService>();
+                    navigationService?.GoBack();
                 });
             }
             else
@@ -222,6 +221,23 @@ namespace GameCore.Core
             }
         }
 
+        private async Task InitializeUINavigationService()
+        {
+            var navigationService = FindFirstObjectByType<UINavigationService>();
+
+            if (navigationService == null)
+            {
+                var navServiceGO = new GameObject("UINavigationService");
+                navServiceGO.transform.SetParent(transform, false);
+                navigationService = navServiceGO.AddComponent<UINavigationService>();
+            }
+
+            if (navigationService != null)
+            {
+                await ServiceLocator.Instance.RegisterService<UINavigationService>(navigationService);
+                CoreLogger.Log("APP", "UINavigationService initialized");
+            }
+        }
         public void RegisterInitializable(IInitializable initializable)
         {
             if (!_initializables.Contains(initializable))
