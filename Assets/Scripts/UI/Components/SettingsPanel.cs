@@ -31,8 +31,7 @@ namespace GameCore.Core
                 sfxSlider.onValueChanged.AddListener(SetSfxVolume);
             }
 
-            if (backButton != null)
-                backButton.onClick.AddListener(OnBackButtonClicked);
+            
         }
 
         private void SetMusicVolume(float value)
@@ -45,11 +44,7 @@ namespace GameCore.Core
             AudioManager.Instance?.SetVolume(AudioType.SFX, value);
         }
 
-        private async void OnBackButtonClicked()
-        {
-            AudioManager.Instance?.PlaySound("ButtonClick", AudioType.UI);
-            await UIManager.Instance.ShowPanelByName("MainMenuPanel");
-        }
+      
 
         public override void Show()
         {

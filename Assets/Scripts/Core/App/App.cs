@@ -79,7 +79,7 @@ namespace GameCore.Core
             await InitializeAudioManager();
             await InitializeSaveManager();
             await InitializeInputActionHandler();
-
+            await InitializeUIServices();
             // Сортуємо компоненти за пріоритетом
             _initializables.Sort((a, b) => b.InitializationPriority.CompareTo(a.InitializationPriority));
 
@@ -237,6 +237,17 @@ namespace GameCore.Core
                 await ServiceLocator.Instance.RegisterService<UINavigationService>(navigationService);
                 CoreLogger.Log("APP", "UINavigationService initialized");
             }
+        }
+
+        private async Task InitializeUIServices()
+        {
+            // Створення об'єктів
+            var buttonRegistry = gameObject.AddComponent<UIButtonRegistry>();
+            var buttonFactory = gameObject.AddComponent<UIButtonFactory>();
+
+            // Реєстрація в ServiceLocator
+            await ServiceLocator.Instance.RegisterService<UIButtonRegistry>(buttonRegistry);
+            await ServiceLocator.Instance.RegisterService<UIButtonFactory>(buttonFactory);
         }
         public void RegisterInitializable(IInitializable initializable)
         {
