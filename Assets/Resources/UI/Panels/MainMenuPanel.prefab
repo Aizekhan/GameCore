@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 3532471244967832597}
   - component: {fileID: 7385962434269523812}
   - component: {fileID: 920621320484427775}
+  - component: {fileID: 8574557588958906527}
   m_Layer: 5
   m_Name: ExitButton
   m_TagString: Untagged
@@ -121,6 +122,27 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &8574557588958906527
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1463602475954222304}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 046ae8429a8c5fc4b831bdd24445caa3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  buttonCategory: MainMenu
+  isBackButton: 0
+  showPanelName: 
+  clickSoundName: ButtonClick
+  hoverSoundName: ButtonHover
+  soundType: 2
+  useHoverAnimation: 1
+  hoverScale: 1.05
+  animationSpeed: 10
 --- !u!1 &1692346025717999028
 GameObject:
   m_ObjectHideFlags: 0
@@ -133,8 +155,12 @@ GameObject:
   - component: {fileID: 3891712195889883758}
   - component: {fileID: 2210287923449483011}
   - component: {fileID: 5130468961957004740}
+  - component: {fileID: 3509638624708925504}
   m_Layer: 5
-  m_Name: SettingsButton
+  m_Name: '[BackButton] [BackButton] [BackButton] [BackButton] [BackButton] [BackButton]
+    [BackButton] [BackButton] [BackButton] [BackButton] [BackButton] [BackButton]
+    [BackButton] [BackButton] [BackButton] [BackButton] [BackButton] [BackButton]
+    [BackButton] SettingsButton'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -242,6 +268,27 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &3509638624708925504
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1692346025717999028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 046ae8429a8c5fc4b831bdd24445caa3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  buttonCategory: MainMenu
+  isBackButton: 0
+  showPanelName: 
+  clickSoundName: ButtonClick
+  hoverSoundName: ButtonHover
+  soundType: 2
+  useHoverAnimation: 1
+  hoverScale: 1.05
+  animationSpeed: 10
 --- !u!1 &2955162510641657998
 GameObject:
   m_ObjectHideFlags: 0
@@ -254,8 +301,13 @@ GameObject:
   - component: {fileID: 5203908866833179274}
   - component: {fileID: 6286614027259447313}
   - component: {fileID: 3023577732455156971}
+  - component: {fileID: 2191613491977938094}
   m_Layer: 5
-  m_Name: StartButton
+  m_Name: "[\u2192 GameScene] [\u2192 GameScene] [\u2192 GameScene] [\u2192 GameScene]
+    [\u2192 GameScene] [\u2192 Gameplay] [\u2192 Gameplay] [\u2192 Gamepla] [\u2192
+    Gamepla] [\u2192 Gamepl] [\u2192 Gamepl] [\u2192 Gamep] [\u2192 Game] [\u2192
+    Game] [\u2192 Gam] [\u2192 Ga] [\u2192 Ga] [\u2192 G] [\u2192 G] [\u2192 \u041F]
+    [\u2192 \u041F] StartButton"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -363,6 +415,27 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &2191613491977938094
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2955162510641657998}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 046ae8429a8c5fc4b831bdd24445caa3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  buttonCategory: MainMenu
+  isBackButton: 0
+  showPanelName: GameScene
+  clickSoundName: ButtonClick
+  hoverSoundName: ButtonHover
+  soundType: 2
+  useHoverAnimation: 1
+  hoverScale: 1.05
+  animationSpeed: 10
 --- !u!1 &3893797074626544671
 GameObject:
   m_ObjectHideFlags: 0

@@ -245,9 +245,18 @@ namespace GameCore.Core
             var buttonRegistry = gameObject.AddComponent<UIButtonRegistry>();
             var buttonFactory = gameObject.AddComponent<UIButtonFactory>();
 
-            // Реєстрація в ServiceLocator
+            // Встановлення шляху до префабу кнопки (опційно)
+            buttonFactory.SetButtonPrefabPath("UI/Prefabs/StandardButton");
+
+            // Реєстрація сервісів
             await ServiceLocator.Instance.RegisterService<UIButtonRegistry>(buttonRegistry);
             await ServiceLocator.Instance.RegisterService<UIButtonFactory>(buttonFactory);
+
+            // Ініціалізація сервісів
+            await buttonRegistry.Initialize();
+            await buttonFactory.Initialize();
+
+            CoreLogger.Log("UI Button Services initialized");
         }
         public void RegisterInitializable(IInitializable initializable)
         {

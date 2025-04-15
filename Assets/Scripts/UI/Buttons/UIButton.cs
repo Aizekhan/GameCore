@@ -133,12 +133,21 @@ namespace GameCore.Core
 #if UNITY_EDITOR
         private void OnValidate()
         {
-            gameObject.name = isBackButton
-                ? "[BackButton] " + gameObject.name
-                : !string.IsNullOrEmpty(showPanelName)
-                    ? $"[→ {showPanelName}] " + gameObject.name
-                    : gameObject.name;
+            string cleanName = gameObject.name;
+
+            // Видалити старі позначки
+            cleanName = cleanName.Replace("[BackButton]", "").Trim();
+            if (showPanelName != null)
+                cleanName = cleanName.Replace($"[{showPanelName}]", "").Trim();
+
+            if (isBackButton)
+                gameObject.name = $"[BackButton] {cleanName}";
+            else if (!string.IsNullOrEmpty(showPanelName))
+                gameObject.name = $"[{showPanelName}] {cleanName}";
+            else
+                gameObject.name = cleanName;
         }
 #endif
+
     }
 }

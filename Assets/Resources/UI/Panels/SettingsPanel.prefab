@@ -733,8 +733,9 @@ GameObject:
   - component: {fileID: 3629521058318366956}
   - component: {fileID: 6793763833733156084}
   - component: {fileID: 8802042132790116319}
+  - component: {fileID: 8534794603854864442}
   m_Layer: 5
-  m_Name: BackButton
+  m_Name: '[BackButton] [BackButton] BackButton'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -842,6 +843,27 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &8534794603854864442
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6156359821757569035}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 046ae8429a8c5fc4b831bdd24445caa3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  buttonCategory: Settings
+  isBackButton: 1
+  showPanelName: 
+  clickSoundName: ButtonClick
+  hoverSoundName: ButtonHover
+  soundType: 2
+  useHoverAnimation: 1
+  hoverScale: 1.05
+  animationSpeed: 10
 --- !u!1 &6436298954388729557
 GameObject:
   m_ObjectHideFlags: 0
