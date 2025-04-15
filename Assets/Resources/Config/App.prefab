@@ -48,5 +48,6 @@ MonoBehaviour:
   uiManagerPrefab: {fileID: 5316027076547032678, guid: 359ebbda0ba0a684faf7b600cbecbaab, type: 3}
   audioManagerPrefab: {fileID: 8649427995502494272, guid: eb5b2f302301e1c4ea22e7708fbc94d3, type: 3}
   saveManagerPrefab: {fileID: 6904414081860661260, guid: f9df6c236918cc04ebe852d43249a7a4, type: 3}
+  inputActionHandlerPrefab: {fileID: 4223617530707205165, guid: f59a5e323ba4b5d4ab6ab5a99579915b, type: 3}
   mainMenuSceneName: MainMenu
   automaticallyLoadMainMenu: 1

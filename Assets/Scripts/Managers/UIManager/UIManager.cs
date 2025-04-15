@@ -288,5 +288,11 @@ namespace GameCore.Core
                 panelName = gameObject.name;
             }
         }
+
+        public async void ShowSettingsPanel()
+        {
+            await ShowPanel(settingsPanelPrefab);
+        }
+
     }
 }

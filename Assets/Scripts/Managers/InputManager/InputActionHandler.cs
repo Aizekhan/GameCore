@@ -10,10 +10,6 @@ namespace GameCore.Core
     /// </summary>
     public class InputActionHandler : MonoBehaviour, IService
     {
-        [Header("Input")]
-        [SerializeField] private PlayerInput playerInput;
-        [SerializeField] private InputActionAsset inputActions;
-
         [Header("UI Events")]
         public UnityEvent onSubmit;
         public UnityEvent onCancel;
@@ -25,13 +21,11 @@ namespace GameCore.Core
         private InputAction pauseAction;
         private InputAction middleClickAction;
 
-        private void Awake()
+        public async Task Initialize()
         {
-            if (playerInput == null)
-                playerInput = FindFirstObjectByType<PlayerInput>();
+            CoreLogger.Log("INPUT", "InputActionHandler initialized via IService");
 
-            if (inputActions == null && playerInput != null)
-                inputActions = playerInput.actions;
+            var inputActions = InputSchemeManager.Instance?.GetComponent<PlayerInput>()?.actions;
 
             if (inputActions != null)
             {
@@ -47,14 +41,12 @@ namespace GameCore.Core
             }
             else
             {
-                CoreLogger.LogWarning("INPUT", "❗ InputActions не призначені в InputActionHandler.");
+                CoreLogger.LogWarning("INPUT", "❗ InputActions не знайдено через InputSchemeManager.");
             }
-        }
-        public async Task Initialize()
-        {
-            CoreLogger.Log("INPUT", "InputActionHandler initialized via IService");
+
             await Task.CompletedTask;
         }
+
         private void OnDestroy()
         {
             Unbind(submitAction, OnSubmit);
@@ -66,8 +58,16 @@ namespace GameCore.Core
         private void Bind(InputAction action, System.Action callback)
         {
             if (action != null)
-                action.performed += ctx => callback?.Invoke();
+            {
+                action.performed += ctx =>
+                {
+                    var controlPath = ctx.control?.displayName ?? ctx.control?.name;
+                    CoreLogger.Log("INPUT", $"🕹️ [{action.name}] triggered via [{controlPath}]");
+                    callback?.Invoke();
+                };
+            }
         }
+
 
         private void Unbind(InputAction action, System.Action callback)
         {

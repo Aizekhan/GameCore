@@ -1,4 +1,4 @@
-// Assets/Scripts/Core/App/App.cs
+п»ї// Assets/Scripts/Core/App/App.cs
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -8,8 +8,8 @@ using UnityEngine.SceneManagement;
 namespace GameCore.Core
 {
     /// <summary>
-    /// Центральна точка ініціалізації всіх систем.
-    /// Завантажується першим у сцені Startup.
+    /// Р¦РµРЅС‚СЂР°Р»СЊРЅР° С‚РѕС‡РєР° С–РЅС–С†С–Р°Р»С–Р·Р°С†С–С— РІСЃС–С… СЃРёСЃС‚РµРј.
+    /// Р—Р°РІР°РЅС‚Р°Р¶СѓС”С‚СЊСЃСЏ РїРµСЂС€РёРј Сѓ СЃС†РµРЅС– Startup.
     /// </summary>
     public class App : MonoBehaviour
     {
@@ -27,21 +27,21 @@ namespace GameCore.Core
         [SerializeField] private string mainMenuSceneName = "MainMenu";
         [SerializeField] private bool automaticallyLoadMainMenu = true;
 
-        // Список компонентів, які потребують ініціалізації
+        // РЎРїРёСЃРѕРє РєРѕРјРїРѕРЅРµРЅС‚С–РІ, СЏРєС– РїРѕС‚СЂРµР±СѓСЋС‚СЊ С–РЅС–С†С–Р°Р»С–Р·Р°С†С–С—
         private readonly List<IInitializable> _initializables = new List<IInitializable>();
 
         private void Awake()
         {
             CoreLogger.Log("APP", "Initializing application...");
-            // Зберігаємо App між сценами
+            // Р—Р±РµСЂС–РіР°С”РјРѕ App РјС–Р¶ СЃС†РµРЅР°РјРё
             DontDestroyOnLoad(gameObject);
-            // Ініціалізуємо базові сервіси
+            // Р†РЅС–С†С–Р°Р»С–Р·СѓС”РјРѕ Р±Р°Р·РѕРІС– СЃРµСЂРІС–СЃРё
             InitializeServiceLocator();
         }
 
         private async void Start()
         {
-            // Ініціалізуємо всі сервіси та компоненти
+            // Р†РЅС–С†С–Р°Р»С–Р·СѓС”РјРѕ РІСЃС– СЃРµСЂРІС–СЃРё С‚Р° РєРѕРјРїРѕРЅРµРЅС‚Рё
             await InitializeServices();
 
             CoreLogger.Log("APP", "Application initialized successfully!");
@@ -58,7 +58,7 @@ namespace GameCore.Core
             if (FindFirstObjectByType<ServiceLocator>() == null)
             {
                 var serviceLocatorGO = Instantiate(serviceLocatorPrefab);
-                serviceLocatorGO.transform.SetParent(transform, false); // Робимо дочірнім об'єктом App
+                serviceLocatorGO.transform.SetParent(transform, false); // Р РѕР±РёРјРѕ РґРѕС‡С–СЂРЅС–Рј РѕР±'С”РєС‚РѕРј App
                 var serviceLocator = serviceLocatorGO.GetComponent<ServiceLocator>();
 
                 if (serviceLocator == null)
@@ -73,16 +73,16 @@ namespace GameCore.Core
 
         private async Task InitializeServices()
         {
-            // Створюємо і реєструємо основні сервіси
+            // РЎС‚РІРѕСЂСЋС”РјРѕ С– СЂРµС”СЃС‚СЂСѓС”РјРѕ РѕСЃРЅРѕРІРЅС– СЃРµСЂРІС–СЃРё
             await InitializeUIManager();
             await InitializeAudioManager();
             await InitializeSaveManager();
             await InitializeInputActionHandler();
 
-            // Сортуємо компоненти за пріоритетом
+            // РЎРѕСЂС‚СѓС”РјРѕ РєРѕРјРїРѕРЅРµРЅС‚Рё Р·Р° РїСЂС–РѕСЂРёС‚РµС‚РѕРј
             _initializables.Sort((a, b) => b.InitializationPriority.CompareTo(a.InitializationPriority));
 
-            // Ініціалізуємо всі додаткові компоненти
+            // Р†РЅС–С†С–Р°Р»С–Р·СѓС”РјРѕ РІСЃС– РґРѕРґР°С‚РєРѕРІС– РєРѕРјРїРѕРЅРµРЅС‚Рё
             foreach (var initializable in _initializables.Where(i => !i.IsInitialized))
             {
                 CoreLogger.Log("APP", $"Initializing {initializable.GetType().Name}...");
@@ -98,7 +98,7 @@ namespace GameCore.Core
             {
                 CoreLogger.Log("APP", "Creating new UIManager");
                 var uiManagerRootGO = Instantiate(uiManagerPrefab);
-                uiManagerRootGO.transform.SetParent(transform, false); // Робимо дочірнім об'єктом App
+                uiManagerRootGO.transform.SetParent(transform, false); // Р РѕР±РёРјРѕ РґРѕС‡С–СЂРЅС–Рј РѕР±'С”РєС‚РѕРј App
                 uiManager = uiManagerRootGO.GetComponentInChildren<UIManager>();
 
                 if (uiManager == null)
@@ -132,13 +132,13 @@ namespace GameCore.Core
             if (audioManager == null && audioManagerPrefab != null)
             {
                 var audioManagerGO = Instantiate(audioManagerPrefab);
-                audioManagerGO.transform.SetParent(transform, false); // Робимо дочірнім об'єктом App
+                audioManagerGO.transform.SetParent(transform, false); // Р РѕР±РёРјРѕ РґРѕС‡С–СЂРЅС–Рј РѕР±'С”РєС‚РѕРј App
                 audioManager = audioManagerGO.GetComponent<AudioManager>();
             }
 
             if (audioManager != null)
             {
-                // Перевіряємо, чи вже зареєстрований
+                // РџРµСЂРµРІС–СЂСЏС”РјРѕ, С‡Рё РІР¶Рµ Р·Р°СЂРµС”СЃС‚СЂРѕРІР°РЅРёР№
                 if (!ServiceLocator.Instance.HasService<AudioManager>())
                 {
                     await ServiceLocator.Instance.RegisterService<AudioManager>(audioManager);
@@ -158,13 +158,13 @@ namespace GameCore.Core
             if (saveManager == null && saveManagerPrefab != null)
             {
                 var saveManagerGO = Instantiate(saveManagerPrefab);
-                saveManagerGO.transform.SetParent(transform, false); // Робимо дочірнім об'єктом App
+                saveManagerGO.transform.SetParent(transform, false); // Р РѕР±РёРјРѕ РґРѕС‡С–СЂРЅС–Рј РѕР±'С”РєС‚РѕРј App
                 saveManager = saveManagerGO.GetComponent<SaveManager>();
             }
 
             if (saveManager != null)
             {
-                // Перевіряємо, чи вже зареєстрований
+                // РџРµСЂРµРІС–СЂСЏС”РјРѕ, С‡Рё РІР¶Рµ Р·Р°СЂРµС”СЃС‚СЂРѕРІР°РЅРёР№
                 if (!ServiceLocator.Instance.HasService<SaveManager>())
                 {
                     await ServiceLocator.Instance.RegisterService<SaveManager>(saveManager);
@@ -200,8 +200,24 @@ namespace GameCore.Core
                 {
                     CoreLogger.Log("APP", "InputActionHandler already registered");
                 }
+
+                // рџ§  РџС–РґРїРёСЃРєР° РЅР° РїРѕРґС–С— РїС–СЃР»СЏ СЂРµС”СЃС‚СЂР°С†С–С—
+                handler.onPause.AddListener(() =>
+                {
+                    UIManager.Instance?.ShowSettingsPanel(); // вњ… С‚РµРїРµСЂ UIManager СЃР°Рј РІРёСЂС–С€СѓС” С‰Рѕ С– СЏРє РїРѕРєР°Р·СѓРІР°С‚Рё
+                });
+
+                handler.onCancel.AddListener(() =>
+                {
+                    UIManager.Instance?.HideAll(); // в¬…пёЏ Р·Р°РєСЂРёРІР°С” РІСЃС– Р°РєС‚РёРІРЅС– РїР°РЅРµР»С–
+                });
+            }
+            else
+            {
+                CoreLogger.LogWarning("APP", "вќЊ InputActionHandler not found in scene or prefab.");
             }
         }
+
         public void RegisterInitializable(IInitializable initializable)
         {
             if (!_initializables.Contains(initializable))
