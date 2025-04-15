@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -74,12 +75,18 @@ namespace GameCore.Core
         private async Task InitializeServices()
         {
             // Створюємо і реєструємо основні сервіси
+           
             await InitializeUIManager();
+           
             await InitializeUINavigationService();
+            await InitializeInputSchemeManager();
+            await InitializeInputActionHandler();
+
             await InitializeAudioManager();
             await InitializeSaveManager();
-            await InitializeInputActionHandler();
+           
             await InitializeUIServices();
+            await InitializeUIPanelServices();
             // Сортуємо компоненти за пріоритетом
             _initializables.Sort((a, b) => b.InitializationPriority.CompareTo(a.InitializationPriority));
 
@@ -205,14 +212,12 @@ namespace GameCore.Core
                 // 🧠 Підписка на події після реєстрації
                 handler.onPause.AddListener(() =>
                 {
-                    UIManager.Instance?.ShowSettingsPanel(); // ✅ тепер UIManager сам вирішує що і як показувати
+                    EventBus.Emit("UI/ShowPanel", "SettingsPanel");
                 });
 
                 handler.onCancel.AddListener(() =>
                 {
-                    // Замість прямої перевірки активності панелі
-                    var navigationService = ServiceLocator.Instance.GetService<UINavigationService>();
-                    navigationService?.GoBack();
+                    EventBus.Emit("Input/Cancel");
                 });
             }
             else
@@ -258,6 +263,57 @@ namespace GameCore.Core
 
             CoreLogger.Log("UI Button Services initialized");
         }
+        private async Task InitializeUIPanelServices()
+        {
+            // 🧩 Створення об’єктів
+            var panelRegistry = gameObject.AddComponent<UIPanelRegistry>();
+            var panelFactory = gameObject.AddComponent<UIPanelFactory>();
+
+            // 🔗 Встановлення залежностей
+            panelFactory.SetRegistry(panelRegistry);
+
+            // 🖼️ Пошук кореня Canvas
+            var panelRoot = GameObject.Find("UICanvas_Root")?.transform;
+            if (panelRoot != null)
+            {
+                panelFactory.SetPanelRoot(panelRoot);
+            }
+            else
+            {
+                CoreLogger.LogWarning("UI", "⚠️ UICanvas_Root not found, panels may be instantiated under wrong parent.");
+            }
+
+            // 📦 Реєстрація сервісів
+            await ServiceLocator.Instance.RegisterService<UIPanelRegistry>(panelRegistry);
+            await ServiceLocator.Instance.RegisterService<UIPanelFactory>(panelFactory);
+
+            // 🚀 Ініціалізація сервісів
+            await panelRegistry.Initialize();
+            await panelFactory.Initialize();
+
+            CoreLogger.Log("UI", "✅ UI Panel Services initialized");
+        }
+
+
+        private async Task InitializeInputSchemeManager()
+        {
+            var inputManager = FindFirstObjectByType<InputSchemeManager>();
+
+            if (inputManager == null)
+            {
+                var go = new GameObject("InputSchemeManager");
+                go.transform.SetParent(transform);
+                inputManager = go.AddComponent<InputSchemeManager>();
+            }
+
+            if (inputManager != null)
+            {
+                await ServiceLocator.Instance.RegisterService<InputSchemeManager>(inputManager);
+                CoreLogger.Log("APP", "✅ InputSchemeManager initialized");
+            }
+        }
+
+       
         public void RegisterInitializable(IInitializable initializable)
         {
             if (!_initializables.Contains(initializable))

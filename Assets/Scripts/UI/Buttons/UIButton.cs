@@ -16,7 +16,7 @@ namespace GameCore.Core
 
         [Header("Навігація")]
         [SerializeField] private bool isBackButton = false;
-        [SerializeField] private string showPanelName = "";
+        [SerializeField] public string showPanelName = "";
 
         [Header("Аудіо")]
         [SerializeField] private string clickSoundName = "ButtonClick";
@@ -135,11 +135,10 @@ namespace GameCore.Core
         {
             string cleanName = gameObject.name;
 
-            // Видалити старі позначки
-            cleanName = cleanName.Replace("[BackButton]", "").Trim();
-            if (showPanelName != null)
-                cleanName = cleanName.Replace($"[{showPanelName}]", "").Trim();
+            // 🔥 Видаляємо всі мітки типу [Щось] з назви
+            cleanName = System.Text.RegularExpressions.Regex.Replace(cleanName, @"\[[^\]]*\]", "").Trim();
 
+            // ➕ Додаємо актуальну мітку
             if (isBackButton)
                 gameObject.name = $"[BackButton] {cleanName}";
             else if (!string.IsNullOrEmpty(showPanelName))
@@ -148,6 +147,7 @@ namespace GameCore.Core
                 gameObject.name = cleanName;
         }
 #endif
+
 
     }
 }

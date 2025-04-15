@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 920621320484427775}
   - component: {fileID: 8574557588958906527}
   m_Layer: 5
-  m_Name: ExitButton
+  m_Name: '[BackButton] ExitButton'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -135,7 +135,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   buttonCategory: MainMenu
-  isBackButton: 0
+  isBackButton: 1
   showPanelName: 
   clickSoundName: ButtonClick
   hoverSoundName: ButtonHover
@@ -157,10 +157,7 @@ GameObject:
   - component: {fileID: 5130468961957004740}
   - component: {fileID: 3509638624708925504}
   m_Layer: 5
-  m_Name: '[BackButton] [BackButton] [BackButton] [BackButton] [BackButton] [BackButton]
-    [BackButton] [BackButton] [BackButton] [BackButton] [BackButton] [BackButton]
-    [BackButton] [BackButton] [BackButton] [BackButton] [BackButton] [BackButton]
-    [BackButton] SettingsButton'
+  m_Name: '[SettingsPanel] SettingsButton'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -282,7 +279,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   buttonCategory: MainMenu
   isBackButton: 0
-  showPanelName: 
+  showPanelName: SettingsPanel
   clickSoundName: ButtonClick
   hoverSoundName: ButtonHover
   soundType: 2
@@ -300,14 +297,10 @@ GameObject:
   - component: {fileID: 4027182555325253158}
   - component: {fileID: 5203908866833179274}
   - component: {fileID: 6286614027259447313}
+  - component: {fileID: 5604613183841368562}
   - component: {fileID: 3023577732455156971}
-  - component: {fileID: 2191613491977938094}
   m_Layer: 5
-  m_Name: "[\u2192 GameScene] [\u2192 GameScene] [\u2192 GameScene] [\u2192 GameScene]
-    [\u2192 GameScene] [\u2192 Gameplay] [\u2192 Gameplay] [\u2192 Gamepla] [\u2192
-    Gamepla] [\u2192 Gamepl] [\u2192 Gamepl] [\u2192 Gamep] [\u2192 Game] [\u2192
-    Game] [\u2192 Gam] [\u2192 Ga] [\u2192 Ga] [\u2192 G] [\u2192 G] [\u2192 \u041F]
-    [\u2192 \u041F] StartButton"
+  m_Name: StartButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -371,6 +364,27 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &5604613183841368562
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2955162510641657998}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 046ae8429a8c5fc4b831bdd24445caa3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  buttonCategory: Default
+  isBackButton: 0
+  showPanelName: 
+  clickSoundName: ButtonClick
+  hoverSoundName: ButtonHover
+  soundType: 2
+  useHoverAnimation: 1
+  hoverScale: 1.05
+  animationSpeed: 10
 --- !u!114 &3023577732455156971
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -415,27 +429,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &2191613491977938094
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2955162510641657998}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 046ae8429a8c5fc4b831bdd24445caa3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  buttonCategory: MainMenu
-  isBackButton: 0
-  showPanelName: GameScene
-  clickSoundName: ButtonClick
-  hoverSoundName: ButtonHover
-  soundType: 2
-  useHoverAnimation: 1
-  hoverScale: 1.05
-  animationSpeed: 10
 --- !u!1 &3893797074626544671
 GameObject:
   m_ObjectHideFlags: 0
@@ -719,7 +712,6 @@ GameObject:
   - component: {fileID: 3517461854909218249}
   - component: {fileID: 4228932327272683249}
   - component: {fileID: 1072497189582574946}
-  - component: {fileID: 8886260070783223486}
   - component: {fileID: 7121825542034243621}
   m_Layer: 5
   m_Name: MainMenuPanel
@@ -786,23 +778,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &8886260070783223486
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6591778619591907171}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dff12fa94bb69cb44a3e96491eedf052, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  panelName: 
-  startButton: {fileID: 3023577732455156971}
-  settingsButton: {fileID: 5130468961957004740}
-  exitButton: {fileID: 920621320484427775}
-  versionText: {fileID: 8171293155147225529}
 --- !u!225 &7121825542034243621
 CanvasGroup:
   m_ObjectHideFlags: 0

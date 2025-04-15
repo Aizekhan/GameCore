@@ -1,53 +1,38 @@
 ﻿// Assets/Scripts/Managers/UIManager/UIManager.cs
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using UnityEngine;
+using System.Threading.Tasks;
 using UnityEngine.SceneManagement;
-
 
 namespace GameCore.Core
 {
     /// <summary>
-    /// Менеджер для управління UI панелями та їх відображенням
+    /// Уніфікований UI Manager: реагує на події, відкриває панелі по імені, керує fade.
     /// </summary>
     public class UIManager : MonoBehaviour, IService, IInitializable
     {
-       
         public static UIManager Instance { get; private set; }
-
-        [Header("UI Префаби Панелей")]
-        [SerializeField] private GameObject mainMenuPanelPrefab;
-        [SerializeField] private GameObject loadingPanelPrefab;
-        [SerializeField] private GameObject gameplayPanelPrefab;
-        [SerializeField] public GameObject settingsPanelPrefab;
-      
-
-        [Header("Canvas для UI")]
-        [SerializeField] private Transform panelParent; // Сюди інстанціюються панелі (UICanvas_Root)
 
         [Header("Fade")]
         [SerializeField] private FadeController fadeController;
 
-        // Словник для зберігання інстансів панелей
-        private readonly Dictionary<string, UIPanel> _panelInstances = new Dictionary<string, UIPanel>();
         private UIPanel _currentPanel;
+        private bool _isInitialized;
 
-        // IInitializable implementation
-        public bool IsInitialized { get; private set; }
-        public int InitializationPriority => 80; // Високий пріоритет, але нижче за ServiceLocator і PlatformDetector
+        public bool IsInitialized => _isInitialized;
+        public int InitializationPriority => 80;
 
         private void Awake()
         {
-            if (Instance != null && Instance != this)
+            if (Instance == null)
+            {
+                Instance = this;
+                DontDestroyOnLoad(gameObject);
+            }
+            else
             {
                 Destroy(gameObject);
-                return;
             }
 
-            Instance = this;
-
-           
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
@@ -59,239 +44,68 @@ namespace GameCore.Core
 
         public async Task Initialize()
         {
-            if (IsInitialized) return;
-
-            // Переконуємося, що у нас є батьківський об'єкт для панелей
-            if (panelParent == null)
-            {
-                var canvasObj = GameObject.Find("UICanvas_Root");
-                if (canvasObj != null)
-                {
-                    panelParent = canvasObj.transform;
-                }
-                else
-                {
-                    CoreLogger.LogWarning("UI", "Panel parent not assigned and UICanvas_Root not found!");
-                }
-            }
-
-            // Підписуємося на події
             EventBus.Subscribe("UI/ShowPanel", OnShowPanelEvent);
-            EventBus.Subscribe("UI/HidePanel", OnHidePanelEvent);
             EventBus.Subscribe("UI/HideAllPanels", _ => HideAll());
 
-            IsInitialized = true;
+            _isInitialized = true;
             CoreLogger.Log("UI", "UIManager initialized");
-
             await Task.CompletedTask;
         }
 
         private async void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            CoreLogger.Log("UI", $"Scene loaded: {scene.name}");
-
-            // Перевіряємо наявність PlayerInput і його поточну карту
-            if (scene.name == "MainMenu" && mainMenuPanelPrefab == null)
-            {
-                CoreLogger.LogError("UI", "mainMenuPanelPrefab is null!");
-            }
-            // Показуємо відповідну панель для сцени
-            switch (scene.name)
-            {
-                case "MainMenu":
-                    await ShowPanel(mainMenuPanelPrefab);
-                    break;
-                case "LoadingScene":
-                    await ShowPanel(loadingPanelPrefab);
-                    break;
-                case "GameScene":
-                    await ShowPanel(gameplayPanelPrefab);
-                    break;
-                case "Startup":
-                    // Стартова сцена не потребує UI
-                    break;
-                default:
-                    CoreLogger.LogWarning("UI", $"Scene {scene.name} does not have a matching panel.");
-                    HideAll();
-                    break;
-            }
+            if (scene.name == "MainMenu")
+                await ShowPanelByName("MainMenuPanel");
+            else if (scene.name == "GameScene")
+                await ShowPanelByName("GameplayPanel");
+            else if (scene.name == "LoadingScene")
+                await ShowPanelByName("LoadingPanel");
         }
 
-        public async Task<UIPanel> ShowPanel(GameObject panelPrefab, bool withAnimation = true)
+        public async Task<UIPanel> ShowPanelByName(string panelName, bool withFade = true)
         {
-            if (panelPrefab == null)
-            {
-                CoreLogger.LogError("UI", "Cannot show null panel prefab!");
-                return null;
-            }
+            var factory = ServiceLocator.Instance.GetService<UIPanelFactory>();
 
-            if (fadeController != null && withAnimation)
+            if (withFade && fadeController != null)
                 await fadeController.FadeToBlack();
 
-            UIPanel panel = GetOrCreatePanelInstance(panelPrefab);
-            if (panel == null)
-            {
-                CoreLogger.LogError("UI", $"Failed to create panel from prefab: {panelPrefab.name}");
-                return null;
-            }
+            if (_currentPanel != null)
+                _currentPanel.Hide();
 
-            if (_currentPanel != null && _currentPanel != panel)
-            {
-                if (withAnimation)
-                    await _currentPanel.HideAnimated();
-                else
-                    _currentPanel.Hide();
-            }
+            var panel = factory.CreatePanel(panelName);
+            _currentPanel = panel;
 
-            if (withAnimation)
-                await panel.ShowAnimated();
-            else
-                panel.Show();
+            panel?.Show();
 
-            if (fadeController != null && withAnimation)
+            if (withFade && fadeController != null)
                 await fadeController.FadeFromBlack();
 
-            _currentPanel = panel;
-
-           
-            _currentPanel = panel;
-            EventBus.Emit("UI/PanelChanged", panel.PanelName);
+            EventBus.Emit("UI/PanelChanged", panelName);
             return panel;
         }
-        public async Task FadeToBlack(float duration)
-        {
-            fadeController.fadeDuration = duration;
-            await fadeController.FadeToBlack();
-        }
 
-        public async Task<UIPanel> ShowPanelByName(string panelName, bool withAnimation = true)
-        {
-            // Перевіряємо, чи панель вже створена
-            foreach (var panel in _panelInstances.Values)
-            {
-                if (panel != null && panel.PanelName == panelName)
-                {
-                    return await ShowPanel(panel.gameObject, withAnimation);
-                }
-            }
-
-            // Якщо ні, намагаємось завантажити її з Resources
-            GameObject prefab = Resources.Load<GameObject>($"UI/Panels/{panelName}");
-            if (prefab != null)
-            {
-                return await ShowPanel(prefab, withAnimation);
-            }
-
-            CoreLogger.LogError("UI", $"Panel with name {panelName} not found in panels or Resources!");
-            return null;
-        }
-        private UIPanel GetOrCreatePanelInstance(GameObject panelPrefab)
-        {
-            string prefabName = panelPrefab.name;
-
-            // Перевіряємо, чи існує вже інстанс
-            if (_panelInstances.TryGetValue(prefabName, out var panel))
-            {
-                if (panel != null)
-                    return panel;
-
-                // Якщо інстанс був знищений, видаляємо його з словника
-                _panelInstances.Remove(prefabName);
-            }
-
-            // Створюємо новий інстанс
-            GameObject instance = Instantiate(panelPrefab, panelParent);
-            UIPanel uiPanel = instance.GetComponent<UIPanel>();
-
-            if (uiPanel == null)
-            {
-                CoreLogger.LogWarning("UI", $"Panel prefab {prefabName} doesn't have UIPanel component!");
-                // Спробуємо додати базовий компонент
-                uiPanel = instance.AddComponent<DefaultUIPanel>();
-            }
-
-            _panelInstances[prefabName] = uiPanel;
-            return uiPanel;
-        }
-
-        // 🔄 оновлений HideAll()
         public void HideAll()
         {
-            foreach (var panel in _panelInstances.Values)
-            {
-                if (panel != null && panel.IsActive)
-                    panel.Hide();
-            }
-
+            _currentPanel?.Hide();
             _currentPanel = null;
-
             EventBus.Emit("UI/AllPanelsHidden", null);
         }
 
-        public UIPanel GetCurrentPanel()
-        {
-            return _currentPanel;
-        }
+        public UIPanel GetCurrentPanel() => _currentPanel;
 
         private void OnShowPanelEvent(object data)
         {
             if (data is string panelName)
-            {
-                // Знаходимо панель за іменем
-                foreach (var panel in _panelInstances.Values)
-                {
-                    if (panel != null && panel.PanelName == panelName)
-                    {
-                        ShowPanel(panel.gameObject).ConfigureAwait(false);
-                        return;
-                    }
-                }
-
-                CoreLogger.LogWarning("UI", $"Panel with name {panelName} not found.");
-            }
-            else if (data is GameObject panelPrefab)
-            {
-                ShowPanel(panelPrefab).ConfigureAwait(false);
-            }
+                ShowPanelByName(panelName).ConfigureAwait(false);
         }
 
-        private void OnHidePanelEvent(object data)
+        public async Task FadeToBlack(float duration)
         {
-            if (data is string panelName)
+            if (fadeController != null)
             {
-                // Знаходимо панель за іменем
-                foreach (var panel in _panelInstances.Values)
-                {
-                    if (panel != null && panel.PanelName == panelName)
-                    {
-                        if (panel.IsActive)
-                            panel.Hide();
-                        return;
-                    }
-                }
-            }
-            else if (data is UIPanel panel)
-            {
-                if (panel.IsActive)
-                    panel.Hide();
+                fadeController.fadeDuration = duration;
+                await fadeController.FadeToBlack();
             }
         }
-
-        // Допоміжний клас для підтримки панелей без UIPanel компонента
-        private class DefaultUIPanel : UIPanel
-        {
-            protected override void Awake()
-            {
-                base.Awake();
-                panelName = gameObject.name;
-            }
-        }
-
-        public async void ShowSettingsPanel()
-        {
-            await ShowPanel(settingsPanelPrefab);
-        }
-       
-
     }
 }

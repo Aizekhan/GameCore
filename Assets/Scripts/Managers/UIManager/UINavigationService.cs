@@ -1,28 +1,25 @@
-// Assets/Scripts/Managers/UIManager/UINavigationService.cs
-using System.Collections.Generic;
+п»їusing System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
-using System;
 using UnityEngine.SceneManagement;
 
 namespace GameCore.Core
 {
     public class UINavigationService : MonoBehaviour, IService
     {
-        private Stack<UIPanel> _panelHistory = new Stack<UIPanel>();
-        private UIManager _uiManager;
+        private Stack<string> _panelHistory = new Stack<string>();
+        private UIPanelFactory _panelFactory;
 
         public async Task Initialize()
         {
-            _uiManager = ServiceLocator.Instance.GetService<UIManager>();
+            _panelFactory = ServiceLocator.Instance.GetService<UIPanelFactory>();
 
-            if (_uiManager == null)
+            if (_panelFactory == null)
             {
-                CoreLogger.LogError("UI", "UINavigationService: UIManager not found");
+                CoreLogger.LogError("UI", "UINavigationService: UIPanelFactory not found");
                 return;
             }
 
-            // Підписка на зміну панелей
             EventBus.Subscribe("UI/PanelChanged", OnPanelChanged);
             EventBus.Subscribe("Input/Cancel", OnCancelPressed);
 
@@ -34,66 +31,52 @@ namespace GameCore.Core
         {
             if (data is string panelName)
             {
-                var currentPanel = _uiManager.GetCurrentPanel();
-                if (currentPanel != null)
+                if (_panelHistory.Count == 0 || _panelHistory.Peek() != panelName)
                 {
-                    // Додаємо в історію
-                    if (_panelHistory.Count == 0 || _panelHistory.Peek() != currentPanel)
-                    {
-                        _panelHistory.Push(currentPanel);
-                    }
+                    _panelHistory.Push(panelName);
+                }
 
-                    // Перемикаємо режим вводу
+                if (ServiceLocator.Instance.HasService<InputSchemeManager>())
+                {
                     var inputManager = ServiceLocator.Instance.GetService<InputSchemeManager>();
-                    if (inputManager != null)
-                    {
-                        if (currentPanel.PanelName != "GameplayPanel")
-                            inputManager.SwitchToUI();
-                        else
-                            inputManager.SwitchToGameplay();
-                    }
+                    if (panelName != "GameplayPanel")
+                        inputManager.SwitchToUI();
+                    else
+                        inputManager.SwitchToGameplay();
                 }
             }
         }
 
-        private void OnCancelPressed(object _)
+        private async void OnCancelPressed(object _)
         {
-            GoBack();
+            await GoBack();
         }
 
-        public async void GoBack()
+        public async Task GoBack()
         {
-            // Якщо історія пуста
             if (_panelHistory.Count == 0)
             {
-                // Якщо ми в GameScene і відкрита GameplayPanel, запропонуємо вихід із гри
-                if (SceneManager.GetActiveScene().name == "GameScene" &&
-                    _uiManager.GetCurrentPanel()?.PanelName == "GameplayPanel")
+                if (SceneManager.GetActiveScene().name == "GameScene")
                 {
-                    // Показуємо діалог підтвердження виходу
-                    await _uiManager.ShowPanelByName("ExitConfirmationPanel");
+                    EventBus.Emit("UI/ShowPanel", "ExitConfirmationPanel");
                     return;
                 }
 
-                // Інакше приховуємо поточну панель, що поверне нас у геймплей
-                _uiManager.HideAll();
+                EventBus.Emit("UI/HideAllPanels");
                 return;
             }
 
-            // Повертаємось до попередньої панелі
-            var previousPanel = _panelHistory.Pop();
+            string previousPanelName = _panelHistory.Pop();
 
-            // Якщо це MainMenu, перевіряємо чи ми на сцені MainMenu
-            if (previousPanel.PanelName == "MainMenuPanel" &&
-                SceneManager.GetActiveScene().name != "MainMenu")
+            if (previousPanelName == "MainMenuPanel" && SceneManager.GetActiveScene().name != "MainMenu")
             {
-                // Завантажуємо сцену MainMenu замість показу панелі
-                SceneLoader.Instance.LoadScene("MainMenu");
+                await SceneLoader.Instance.LoadSceneAsync("MainMenu");
                 return;
             }
 
-            await _uiManager.ShowPanel(previousPanel.gameObject);
+            EventBus.Emit("UI/ShowPanel", previousPanelName);
         }
+
 
         public void ClearHistory()
         {

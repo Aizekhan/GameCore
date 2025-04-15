@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 6110450451478085897}
   - component: {fileID: 1832857177224102839}
   - component: {fileID: 9041155062389999183}
-  - component: {fileID: 4588359368971106491}
   - component: {fileID: 7354653241505754078}
   m_Layer: 5
   m_Name: GameplayPanel
@@ -77,20 +76,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &4588359368971106491
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3189285172567240958}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a8ffe85e7484c14408dbbbf98550f001, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  panelName: 
-  closeOnEscape: 0
 --- !u!225 &7354653241505754078
 CanvasGroup:
   m_ObjectHideFlags: 0
