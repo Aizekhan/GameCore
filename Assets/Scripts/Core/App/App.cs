@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
+using GameCore.Core.Interfaces;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -71,13 +71,23 @@ namespace GameCore.Core
                 CoreLogger.Log("APP", "ServiceLocator initialized");
             }
         }
-
+        private async Task InitializePlatformService()
+        {
+            if (!ServiceLocator.Instance.HasService<IPlatformService>())
+            {
+                var platformGO = new GameObject("PlatformDetector");
+                DontDestroyOnLoad(platformGO);
+                var detector = platformGO.AddComponent<PlatformDetector>();
+                await ServiceLocator.Instance.RegisterService<IPlatformService>(detector);
+            }
+        }
         private async Task InitializeServices()
         {
             // Створюємо і реєструємо основні сервіси
            
             await InitializeUIManager();
-           
+
+            await InitializePlatformService();
             await InitializeUINavigationService();
             await InitializeInputSchemeManager();
             await InitializeInputActionHandler();
