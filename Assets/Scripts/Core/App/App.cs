@@ -21,6 +21,8 @@ namespace GameCore.Core
         [SerializeField] private GameObject audioManagerPrefab;
         [SerializeField] private GameObject saveManagerPrefab;
 
+        [SerializeField] private GameObject inputActionHandlerPrefab;
+
         [Header("Configuration")]
         [SerializeField] private string mainMenuSceneName = "MainMenu";
         [SerializeField] private bool automaticallyLoadMainMenu = true;
@@ -75,6 +77,7 @@ namespace GameCore.Core
             await InitializeUIManager();
             await InitializeAudioManager();
             await InitializeSaveManager();
+            await InitializeInputActionHandler();
 
             // Сортуємо компоненти за пріоритетом
             _initializables.Sort((a, b) => b.InitializationPriority.CompareTo(a.InitializationPriority));
@@ -174,6 +177,31 @@ namespace GameCore.Core
             }
         }
 
+        private async Task InitializeInputActionHandler()
+        {
+            var handler = FindFirstObjectByType<InputActionHandler>();
+
+            if (handler == null && inputActionHandlerPrefab != null)
+            {
+                var handlerGO = Instantiate(inputActionHandlerPrefab);
+                handlerGO.transform.SetParent(transform, false);
+
+                handler = handlerGO.GetComponent<InputActionHandler>();
+            }
+
+            if (handler != null)
+            {
+                if (!ServiceLocator.Instance.HasService<InputActionHandler>())
+                {
+                    await ServiceLocator.Instance.RegisterService(handler);
+                    CoreLogger.Log("APP", "InputActionHandler initialized");
+                }
+                else
+                {
+                    CoreLogger.Log("APP", "InputActionHandler already registered");
+                }
+            }
+        }
         public void RegisterInitializable(IInitializable initializable)
         {
             if (!_initializables.Contains(initializable))
