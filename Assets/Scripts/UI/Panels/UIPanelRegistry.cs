@@ -22,8 +22,7 @@ namespace GameCore.Core
             {
                 if (prefab != null)
                 {
-                    _panelMap[prefab.name] = prefab;
-                    CoreLogger.Log("UI", $"✅ Registered (auto): {prefab.name}");
+                    RegisterPanel(prefab.name, prefab); // використовуємо існуючу логіку
                 }
             }
 

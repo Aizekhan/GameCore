@@ -84,19 +84,20 @@ namespace GameCore.Core
         private async Task InitializeServices()
         {
             // Створюємо і реєструємо основні сервіси
-           
+            await InitializePlatformService();
+
             await InitializeUIManager();
 
-            await InitializePlatformService();
+            await InitializeUIPanelServices();
+            await InitializeUIServices();
             await InitializeUINavigationService();
-            await InitializeInputSchemeManager();
-            await InitializeInputActionHandler();
+           
 
             await InitializeAudioManager();
             await InitializeSaveManager();
-           
-            await InitializeUIServices();
-            await InitializeUIPanelServices();
+            await InitializeInputSchemeManager();
+            await InitializeInputActionHandler();
+
             // Сортуємо компоненти за пріоритетом
             _initializables.Sort((a, b) => b.InitializationPriority.CompareTo(a.InitializationPriority));
 

@@ -517,9 +517,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   panelName: 
-  musicSlider: {fileID: 9114600900011099362}
-  sfxSlider: {fileID: 8579926302049839925}
-  backButton: {fileID: 8802042132790116319}
 --- !u!1 &3158178135828986103
 GameObject:
   m_ObjectHideFlags: 0

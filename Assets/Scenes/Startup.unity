@@ -421,12 +421,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d6db0841acd2c004e8274873d89a4bfb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mainMenuSceneName: MainMenu
-  androidQualityLevel: 1
-  iosQualityLevel: 1
-  webGLQualityLevel: 2
-  windowsQualityLevel: 3
-  consoleQualityLevel: 4
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0

@@ -26,7 +26,7 @@ namespace GameCore.Core
             if (Instance == null)
             {
                 Instance = this;
-                DontDestroyOnLoad(gameObject);
+              
             }
             else
             {
