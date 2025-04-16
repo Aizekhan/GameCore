@@ -37,32 +37,34 @@ namespace GameCore.Core
                 panelRoot = canvas != null ? canvas.transform : this.transform;
             }
 
-            var panelPrefabs = Resources.LoadAll<GameObject>(panelPrefabsPath);
-
-            foreach (var prefab in panelPrefabs)
-            {
-                if (prefab != null)
-                {
-                    _registry.RegisterPanel(prefab.name, prefab);
-                }
-            }
-
-            CoreLogger.Log("UI", $"✅ UIPanelFactory initialized with {panelPrefabs.Length} panels.");
+            CoreLogger.Log("UI", "✅ UIPanelFactory initialized.");
             await Task.CompletedTask;
         }
 
         public UIPanel CreatePanel(string panelName)
         {
             var prefab = _registry.GetPanelPrefab(panelName);
+
             if (prefab == null)
             {
-                CoreLogger.LogWarning("UI", $"⚠️ Panel '{panelName}' not found.");
-                return null;
+                // ❗ Спроба завантажити вручну, якщо панель не була зареєстрована
+                prefab = Resources.Load<GameObject>($"UI/Panels/{panelName}");
+                if (prefab != null)
+                {
+                    _registry.RegisterPanel(panelName, prefab);
+                    CoreLogger.Log("UI", $"🔄 Lazy-registered panel: {panelName}");
+                }
+                else
+                {
+                    CoreLogger.LogWarning("UI", $"⚠️ Panel '{panelName}' not found in Resources.");
+                    return null;
+                }
             }
 
-            var instance = Instantiate(prefab, panelRoot);
+            var instance = Object.Instantiate(prefab, panelRoot);
             instance.name = prefab.name;
             return instance.GetComponent<UIPanel>();
         }
+
     }
 }
