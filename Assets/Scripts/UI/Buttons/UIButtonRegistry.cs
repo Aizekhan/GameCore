@@ -13,6 +13,8 @@ namespace GameCore.Core
     {
         // Колекція всіх кнопок в проекті
         private Dictionary<string, List<UIButton>> _buttonCategories = new Dictionary<string, List<UIButton>>();
+        public bool IsInitialized { get; private set; }
+        public int InitializationPriority => 55;
 
         // Реєстрація кнопки
         public void RegisterButton(UIButton button, string category = "Default")
@@ -37,8 +39,7 @@ namespace GameCore.Core
         }
 
         // Ініціалізація сервісу
-        public bool IsInitialized { get; private set; }
-        public int InitializationPriority => 50;
+  
 
         public async Task Initialize()
         {

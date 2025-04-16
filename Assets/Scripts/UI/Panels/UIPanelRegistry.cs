@@ -7,12 +7,13 @@ namespace GameCore.Core
     /// <summary>
     /// Зберігає мапу імен панелей → відповідні префаби.
     /// </summary>
-    public class UIPanelRegistry : MonoBehaviour, IService
+    public class UIPanelRegistry : MonoBehaviour, IService, IInitializable
     {
         [SerializeField] private List<GameObject> panelPrefabs;
 
         private Dictionary<string, GameObject> _panelMap;
-
+        public bool IsInitialized { get; private set; }
+        public int InitializationPriority => 65; // встановіть потрібний пріоритет
         public async Task Initialize()
         {
             _panelMap = new Dictionary<string, GameObject>();

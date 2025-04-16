@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Threading.Tasks;
-
+using GameCore.Core.EventSystem;
 namespace GameCore.Core
 {
     [RequireComponent(typeof(CanvasGroup))]

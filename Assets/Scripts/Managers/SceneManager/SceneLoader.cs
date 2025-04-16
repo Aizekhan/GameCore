@@ -1,4 +1,4 @@
-// Assets/Scripts/Managers/SceneManager/SceneLoader.cs
+п»ї// Assets/Scripts/Managers/SceneManager/SceneLoader.cs
 using System;
 using System.Collections;
 using System.Threading.Tasks;
@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
+using GameCore.Core.EventSystem;
 
 namespace GameCore.Core
 {
@@ -24,9 +25,8 @@ namespace GameCore.Core
 
         private bool _isLoading = false;
 
-        // IInitializable implementation
         public bool IsInitialized { get; private set; }
-        public int InitializationPriority => 85;
+        public int InitializationPriority => 75;
 
         private void Awake()
         {
@@ -38,7 +38,6 @@ namespace GameCore.Core
 
             Instance = this;
 
-            // Ініціалізація при старті LoadingScene
             StartCoroutine(LoadTargetScene());
             StartCoroutine(AnimateLoadingDots());
         }
@@ -47,9 +46,7 @@ namespace GameCore.Core
         {
             if (IsInitialized) return;
 
-            // Підписка на події
             EventBus.Subscribe("Scene/LoadScene", OnLoadSceneEvent);
-
             IsInitialized = true;
             CoreLogger.Log("SCENE", "SceneLoader initialized");
 
@@ -79,13 +76,9 @@ namespace GameCore.Core
             _isLoading = true;
             float startTime = Time.time;
 
-            // Сповіщаємо про початок завантаження
             EventBus.Emit("Scene/LoadingStarted", sceneName);
 
-            // Отримуємо доступ до FadeController, якщо він є
             var uiManager = ServiceLocator.Instance?.GetService<UIManager>();
-
-            // Затемнення, якщо UIManager доступний
             if (uiManager != null && fadeTime > 0)
             {
                 await uiManager.FadeToBlack(fadeTime);
@@ -97,14 +90,9 @@ namespace GameCore.Core
             while (!asyncOp.isDone)
             {
                 float progress = Mathf.Clamp01(asyncOp.progress / 0.9f);
-
-                // Виклик колбеку з прогресом
                 onProgressUpdate?.Invoke(progress);
-
-                // Відправка події з прогресом
                 EventBus.Emit("Scene/LoadingProgress", progress);
 
-                // Почекати мінімальний час завантаження
                 if (asyncOp.progress >= 0.9f && Time.time - startTime >= minLoadTime)
                 {
                     asyncOp.allowSceneActivation = true;
@@ -113,8 +101,11 @@ namespace GameCore.Core
                 await Task.Yield();
             }
 
-            // Сповіщаємо про завершення завантаження
             EventBus.Emit("Scene/LoadingCompleted", sceneName);
+
+            // в›” РћС‡РёСЃС‚РєР° РїС–РґРїРёСЃРЅРёРєС–РІ СЃС‚Р°СЂРѕС— СЃС†РµРЅРё
+            EventBus.UnsubscribeCategory("Scene/");
+
             _isLoading = false;
         }
 
@@ -132,19 +123,20 @@ namespace GameCore.Core
                 yield return null;
             }
 
-            // Останній крок
             loadingBar.value = 1f;
             EventBus.Emit("Scene/LoadingProgress", 1f);
             yield return new WaitForSeconds(0.5f);
             asyncOp.allowSceneActivation = true;
 
-            // Сповіщаємо про завершення завантаження
             EventBus.Emit("Scene/LoadingCompleted", sceneToLoad);
+
+            // в›” РћС‡РёСЃС‚РєР° РІСЃС–С… Scene-РїРѕРґС–Р№
+            EventBus.UnsubscribeCategory("Scene/");
         }
 
         IEnumerator AnimateLoadingDots()
         {
-            string baseText = "Завантаження";
+            string baseText = "Р—Р°РІР°РЅС‚Р°Р¶РµРЅРЅСЏ";
             while (true)
             {
                 for (int i = 0; i <= 3; i++)

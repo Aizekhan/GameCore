@@ -2,13 +2,13 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Events;
 using System.Threading.Tasks;
-
+using GameCore.Core.EventSystem;
 namespace GameCore.Core
 {
     /// <summary>
     /// Універсальний обробник UI-дiй для всіх платформ (геймпад, клавіатура, тач).
     /// </summary>
-    public class InputActionHandler : MonoBehaviour, IService
+    public class InputActionHandler : MonoBehaviour, IService, IInitializable
     {
         [Header("UI Events")]
         public UnityEvent onSubmit;
@@ -20,6 +20,8 @@ namespace GameCore.Core
         private InputAction cancelAction;
         private InputAction pauseAction;
         private InputAction middleClickAction;
+        public bool IsInitialized { get; private set; }
+        public int InitializationPriority => 35;
 
         public async Task Initialize()
         {

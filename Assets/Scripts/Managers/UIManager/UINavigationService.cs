@@ -2,13 +2,15 @@
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-
+using GameCore.Core.EventSystem;
 namespace GameCore.Core
 {
-    public class UINavigationService : MonoBehaviour, IService
+    public class UINavigationService : MonoBehaviour, IService, IInitializable
     {
         private Stack<string> _panelHistory = new Stack<string>();
         private UIPanelFactory _panelFactory;
+        public bool IsInitialized { get; private set; }
+        public int InitializationPriority => 45;
 
         public async Task Initialize()
         {

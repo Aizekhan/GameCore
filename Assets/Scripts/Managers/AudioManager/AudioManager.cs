@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Audio;
-
+using GameCore.Core.EventSystem;
 namespace GameCore.Core
 {
     public enum AudioType { SFX, Music, UI, Ambient }
@@ -37,7 +37,7 @@ namespace GameCore.Core
 
         // IInitializable implementation
         public bool IsInitialized { get; private set; }
-        public int InitializationPriority => 70;
+        public int InitializationPriority => 30;
 
         private void Awake()
         {

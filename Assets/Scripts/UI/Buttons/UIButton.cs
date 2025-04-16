@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-
+using GameCore.Core.EventSystem;
 
 namespace GameCore.Core
 {

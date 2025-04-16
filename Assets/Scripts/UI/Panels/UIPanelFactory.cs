@@ -6,11 +6,12 @@ namespace GameCore.Core
     /// <summary>
     /// Створює панелі на основі зареєстрованих у реєстрі префабів.
     /// </summary>
-    public class UIPanelFactory : MonoBehaviour, IService
+    public class UIPanelFactory : MonoBehaviour, IService, IInitializable
     {
         [SerializeField] private string panelPrefabsPath = "UI/Panels";
         [SerializeField] private Transform panelRoot; // основний root
-
+        public bool IsInitialized { get; private set; }
+        public int InitializationPriority => 60;
         private UIPanelRegistry _registry;
 
         public void SetRegistry(UIPanelRegistry registry)

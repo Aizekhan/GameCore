@@ -2,9 +2,9 @@
 using UnityEngine;
 using System.Threading.Tasks;
 using UnityEngine.SceneManagement;
-
+using GameCore.Core.EventSystem;
 namespace GameCore.Core
-{
+{ 
     /// <summary>
     /// Уніфікований UI Manager: реагує на події, відкриває панелі по імені, керує fade.
     /// </summary>
@@ -19,7 +19,7 @@ namespace GameCore.Core
         private bool _isInitialized;
 
         public bool IsInitialized => _isInitialized;
-        public int InitializationPriority => 80;
+        public int InitializationPriority => 70;
 
         private void Awake()
         {

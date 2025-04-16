@@ -3,13 +3,13 @@ using UnityEngine;
 using System.Threading.Tasks;
 using GameCore.Core;
 using GameCore.Core.Interfaces;
-
+using GameCore.Core.EventSystem;
 namespace GameCore.Core
 {
     public class PlatformDetector : MonoBehaviour, IService, IInitializable, IPlatformService
     {
         public bool IsInitialized { get; private set; }
-        public int InitializationPriority => 0;
+        public int InitializationPriority => 90;
         public enum PlatformType
         {
             Unknown,

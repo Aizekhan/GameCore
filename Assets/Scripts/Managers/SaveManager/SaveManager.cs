@@ -3,7 +3,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
-
+using GameCore.Core.EventSystem;
 namespace GameCore.Core
 {
     [Serializable]
@@ -28,7 +28,7 @@ namespace GameCore.Core
 
         // IInitializable implementation
         public bool IsInitialized { get; private set; }
-        public int InitializationPriority => 75;
+        public int InitializationPriority => 25;
 
         public GameData CurrentData
         {

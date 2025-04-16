@@ -5,9 +5,11 @@ using System.Threading.Tasks;
 
 namespace GameCore.Core
 {
-    public class InputSchemeManager : MonoBehaviour, IService
+    public class InputSchemeManager : MonoBehaviour, IService, IInitializable
     {
         public static InputSchemeManager Instance { get; private set; }
+        public bool IsInitialized { get; private set; }
+        public int InitializationPriority => 40;
 
         [Header("Player Input Reference")]
         [SerializeField] private PlayerInput playerInput;

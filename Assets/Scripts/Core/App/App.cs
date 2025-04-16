@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using GameCore.Core.Interfaces;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-
+using GameCore.Core.EventSystem;
 namespace GameCore.Core
 {
     /// <summary>
@@ -14,34 +14,32 @@ namespace GameCore.Core
     /// </summary>
     public class App : MonoBehaviour
     {
-        [Header("Core Services")]
-        [SerializeField] private GameObject serviceLocatorPrefab;
-
-        [Header("Managers")]
-        [SerializeField] private GameObject uiManagerPrefab;
-        [SerializeField] private GameObject audioManagerPrefab;
-        [SerializeField] private GameObject saveManagerPrefab;
-
-        [SerializeField] private GameObject inputActionHandlerPrefab;
-
-        [Header("Configuration")]
+        [Header("Core Configuration")]
         [SerializeField] private string mainMenuSceneName = "MainMenu";
         [SerializeField] private bool automaticallyLoadMainMenu = true;
 
         // Список компонентів, які потребують ініціалізації
         private readonly List<IInitializable> _initializables = new List<IInitializable>();
+        private AppStateManager _stateManager;
 
         private void Awake()
         {
             CoreLogger.Log("APP", "Initializing application...");
             // Зберігаємо App між сценами
             DontDestroyOnLoad(gameObject);
-            // Ініціалізуємо базові сервіси
+
+            // Створюємо компонент ServiceLocator, якщо його немає
             InitializeServiceLocator();
+
+            // Створюємо AppStateManager
+            InitializeAppStateManager();
         }
 
         private async void Start()
         {
+            // Встановлюємо початковий стан
+            _stateManager.ChangeState(AppStateManager.AppState.Initializing, false);
+
             // Ініціалізуємо всі сервіси та компоненти
             await InitializeServices();
 
@@ -49,8 +47,8 @@ namespace GameCore.Core
 
             if (automaticallyLoadMainMenu)
             {
-                CoreLogger.Log("APP", $"Loading main menu: {mainMenuSceneName}");
-                SceneManager.LoadScene(mainMenuSceneName);
+                // Змінюємо стан на MainMenu замість прямого завантаження сцени
+                _stateManager.ChangeState(AppStateManager.AppState.MainMenu);
             }
         }
 
@@ -58,45 +56,34 @@ namespace GameCore.Core
         {
             if (FindFirstObjectByType<ServiceLocator>() == null)
             {
-                var serviceLocatorGO = Instantiate(serviceLocatorPrefab);
-                serviceLocatorGO.transform.SetParent(transform, false); // Робимо дочірнім об'єктом App
-                var serviceLocator = serviceLocatorGO.GetComponent<ServiceLocator>();
-
-                if (serviceLocator == null)
-                {
-                    CoreLogger.LogError("APP", "ServiceLocator prefab doesn't have ServiceLocator component!");
-                    return;
-                }
-
+                var serviceLocatorGO = new GameObject("ServiceLocator");
+                serviceLocatorGO.transform.SetParent(transform, false);
+                serviceLocatorGO.AddComponent<ServiceLocator>();
                 CoreLogger.Log("APP", "ServiceLocator initialized");
             }
         }
-        private async Task InitializePlatformService()
+
+        private void InitializeAppStateManager()
         {
-            if (!ServiceLocator.Instance.HasService<IPlatformService>())
-            {
-                var platformGO = new GameObject("PlatformDetector");
-                DontDestroyOnLoad(platformGO);
-                var detector = platformGO.AddComponent<PlatformDetector>();
-                await ServiceLocator.Instance.RegisterService<IPlatformService>(detector);
-            }
+            var stateManagerGO = new GameObject("AppStateManager");
+            stateManagerGO.transform.SetParent(transform, false);
+            _stateManager = stateManagerGO.AddComponent<AppStateManager>();
+            RegisterInitializable(_stateManager);
         }
+
         private async Task InitializeServices()
         {
-            // Створюємо і реєструємо основні сервіси
-            await InitializePlatformService();
+            // Реєструємо AppStateManager як сервіс
+            await ServiceLocator.Instance.RegisterService<AppStateManager>(_stateManager);
 
-            await InitializeUIManager();
+            // Ініціалізуємо базові сервіси
+            await InitializeCoreSystems();
 
-            await InitializeUIPanelServices();
-            await InitializeUIServices();
-            await InitializeUINavigationService();
-           
+            // Ініціалізуємо UI системи
+            await InitializeUISystems();
 
-            await InitializeAudioManager();
-            await InitializeSaveManager();
-            await InitializeInputSchemeManager();
-            await InitializeInputActionHandler();
+            // Ініціалізуємо менеджери
+            await InitializeManagers();
 
             // Сортуємо компоненти за пріоритетом
             _initializables.Sort((a, b) => b.InitializationPriority.CompareTo(a.InitializationPriority));
@@ -109,138 +96,74 @@ namespace GameCore.Core
             }
         }
 
-        private async Task InitializeUIManager()
+        private async Task InitializeCoreSystems()
         {
+            // Платформо-залежний сервіс
+            if (!ServiceLocator.Instance.HasService<IPlatformService>())
+            {
+                var platformGO = new GameObject("PlatformDetector");
+                DontDestroyOnLoad(platformGO);
+                var detector = platformGO.AddComponent<PlatformDetector>();
+                await ServiceLocator.Instance.RegisterService<IPlatformService>(detector);
+                RegisterInitializable(detector);
+            }
+
+            // Тут можна ініціалізувати інші базові сервіси
+        }
+
+        private async Task InitializeUISystems()
+        {
+            // UI Manager - знаходимо існуючий або створюємо новий
             var uiManager = FindFirstObjectByType<UIManager>();
-
-            if (uiManager == null && uiManagerPrefab != null)
+            if (uiManager == null)
             {
-                CoreLogger.Log("APP", "Creating new UIManager");
-                var uiManagerRootGO = Instantiate(uiManagerPrefab);
-                uiManagerRootGO.transform.SetParent(transform, false); // Робимо дочірнім об'єктом App
-                uiManager = uiManagerRootGO.GetComponentInChildren<UIManager>();
+                var uiManagerGO = new GameObject("UIManager");
+                uiManagerGO.transform.SetParent(transform, false);
+                uiManager = uiManagerGO.AddComponent<UIManager>();
 
-                if (uiManager == null)
-                {
-                    CoreLogger.LogError("APP", "UIManager component not found in prefab!");
-                }
+                // Додаємо FadeController, якщо потрібно
+                var fadeGO = new GameObject("FadeController");
+                fadeGO.transform.SetParent(uiManagerGO.transform, false);
+                var fadeController = fadeGO.AddComponent<FadeController>();
+                // Тут можна налаштувати fadeController, якщо потрібно
             }
 
-            if (uiManager != null)
+            if (uiManager != null && !ServiceLocator.Instance.HasService<UIManager>())
             {
-                if (!ServiceLocator.Instance.HasService<UIManager>())
-                {
-                    await ServiceLocator.Instance.RegisterService<UIManager>(uiManager);
-                    CoreLogger.Log("APP", "UIManager initialized and registered");
-                }
-                else
-                {
-                    CoreLogger.Log("APP", "UIManager already registered, skipping");
-                }
-            }
-            else
-            {
-                CoreLogger.LogError("APP", "Failed to find UIManager component!");
-            }
-        }
-
-        private async Task InitializeAudioManager()
-        {
-            var audioManager = FindFirstObjectByType<AudioManager>();
-
-            if (audioManager == null && audioManagerPrefab != null)
-            {
-                var audioManagerGO = Instantiate(audioManagerPrefab);
-                audioManagerGO.transform.SetParent(transform, false); // Робимо дочірнім об'єктом App
-                audioManager = audioManagerGO.GetComponent<AudioManager>();
+                await ServiceLocator.Instance.RegisterService<UIManager>(uiManager);
+                RegisterInitializable(uiManager);
             }
 
-            if (audioManager != null)
-            {
-                // Перевіряємо, чи вже зареєстрований
-                if (!ServiceLocator.Instance.HasService<AudioManager>())
-                {
-                    await ServiceLocator.Instance.RegisterService<AudioManager>(audioManager);
-                    CoreLogger.Log("APP", "AudioManager initialized");
-                }
-                else
-                {
-                    CoreLogger.Log("APP", "AudioManager already registered, skipping");
-                }
-            }
-        }
+            // UI Panel Services
+            var panelRegistry = gameObject.AddComponent<UIPanelRegistry>();
+            var panelFactory = gameObject.AddComponent<UIPanelFactory>();
+            panelFactory.SetRegistry(panelRegistry);
 
-        private async Task InitializeSaveManager()
-        {
-            var saveManager = Object.FindAnyObjectByType<SaveManager>();
-
-            if (saveManager == null && saveManagerPrefab != null)
+            var panelRoot = GameObject.Find("UICanvas_Root")?.transform;
+            if (panelRoot != null)
             {
-                var saveManagerGO = Instantiate(saveManagerPrefab);
-                saveManagerGO.transform.SetParent(transform, false); // Робимо дочірнім об'єктом App
-                saveManager = saveManagerGO.GetComponent<SaveManager>();
+                panelFactory.SetPanelRoot(panelRoot);
             }
 
-            if (saveManager != null)
-            {
-                // Перевіряємо, чи вже зареєстрований
-                if (!ServiceLocator.Instance.HasService<SaveManager>())
-                {
-                    await ServiceLocator.Instance.RegisterService<SaveManager>(saveManager);
-                    CoreLogger.Log("APP", "SaveManager initialized");
-                }
-                else
-                {
-                    CoreLogger.Log("APP", "SaveManager already registered, skipping");
-                }
-            }
-        }
+            await ServiceLocator.Instance.RegisterService<UIPanelRegistry>(panelRegistry);
+            await ServiceLocator.Instance.RegisterService<UIPanelFactory>(panelFactory);
 
-        private async Task InitializeInputActionHandler()
-        {
-            var handler = FindFirstObjectByType<InputActionHandler>();
+            RegisterInitializable(panelRegistry);
+            RegisterInitializable(panelFactory);
 
-            if (handler == null && inputActionHandlerPrefab != null)
-            {
-                var handlerGO = Instantiate(inputActionHandlerPrefab);
-                handlerGO.transform.SetParent(transform, false);
+            // UI Button Services
+            var buttonRegistry = gameObject.AddComponent<UIButtonRegistry>();
+            var buttonFactory = gameObject.AddComponent<UIButtonFactory>();
+            buttonFactory.SetButtonPrefabPath("UI/Prefabs/StandardButton");
 
-                handler = handlerGO.GetComponent<InputActionHandler>();
-            }
+            await ServiceLocator.Instance.RegisterService<UIButtonRegistry>(buttonRegistry);
+            await ServiceLocator.Instance.RegisterService<UIButtonFactory>(buttonFactory);
 
-            if (handler != null)
-            {
-                if (!ServiceLocator.Instance.HasService<InputActionHandler>())
-                {
-                    await ServiceLocator.Instance.RegisterService(handler);
-                    CoreLogger.Log("APP", "InputActionHandler initialized");
-                }
-                else
-                {
-                    CoreLogger.Log("APP", "InputActionHandler already registered");
-                }
+            RegisterInitializable(buttonRegistry);
+            RegisterInitializable(buttonFactory);
 
-                // 🧠 Підписка на події після реєстрації
-                handler.onPause.AddListener(() =>
-                {
-                    EventBus.Emit("UI/ShowPanel", "SettingsPanel");
-                });
-
-                handler.onCancel.AddListener(() =>
-                {
-                    EventBus.Emit("Input/Cancel");
-                });
-            }
-            else
-            {
-                CoreLogger.LogWarning("APP", "❌ InputActionHandler not found in scene or prefab.");
-            }
-        }
-
-        private async Task InitializeUINavigationService()
-        {
+            // UI Navigation Service
             var navigationService = FindFirstObjectByType<UINavigationService>();
-
             if (navigationService == null)
             {
                 var navServiceGO = new GameObject("UINavigationService");
@@ -248,83 +171,85 @@ namespace GameCore.Core
                 navigationService = navServiceGO.AddComponent<UINavigationService>();
             }
 
-            if (navigationService != null)
+            if (navigationService != null && !ServiceLocator.Instance.HasService<UINavigationService>())
             {
                 await ServiceLocator.Instance.RegisterService<UINavigationService>(navigationService);
-                CoreLogger.Log("APP", "UINavigationService initialized");
+                RegisterInitializable(navigationService);
             }
         }
 
-        private async Task InitializeUIServices()
+        private async Task InitializeManagers()
         {
-            // Створення об'єктів
-            var buttonRegistry = gameObject.AddComponent<UIButtonRegistry>();
-            var buttonFactory = gameObject.AddComponent<UIButtonFactory>();
-
-            // Встановлення шляху до префабу кнопки (опційно)
-            buttonFactory.SetButtonPrefabPath("UI/Prefabs/StandardButton");
-
-            // Реєстрація сервісів
-            await ServiceLocator.Instance.RegisterService<UIButtonRegistry>(buttonRegistry);
-            await ServiceLocator.Instance.RegisterService<UIButtonFactory>(buttonFactory);
-
-            // Ініціалізація сервісів
-            await buttonRegistry.Initialize();
-            await buttonFactory.Initialize();
-
-            CoreLogger.Log("UI Button Services initialized");
-        }
-        private async Task InitializeUIPanelServices()
-        {
-            // 🧩 Створення об’єктів
-            var panelRegistry = gameObject.AddComponent<UIPanelRegistry>();
-            var panelFactory = gameObject.AddComponent<UIPanelFactory>();
-
-            // 🔗 Встановлення залежностей
-            panelFactory.SetRegistry(panelRegistry);
-
-            // 🖼️ Пошук кореня Canvas
-            var panelRoot = GameObject.Find("UICanvas_Root")?.transform;
-            if (panelRoot != null)
+            // Audio Manager
+            var audioManager = FindFirstObjectByType<AudioManager>();
+            if (audioManager == null)
             {
-                panelFactory.SetPanelRoot(panelRoot);
+                var audioManagerGO = new GameObject("AudioManager");
+                audioManagerGO.transform.SetParent(transform, false);
+                audioManager = audioManagerGO.AddComponent<AudioManager>();
             }
-            else
+
+            if (audioManager != null && !ServiceLocator.Instance.HasService<AudioManager>())
             {
-                CoreLogger.LogWarning("UI", "⚠️ UICanvas_Root not found, panels may be instantiated under wrong parent.");
+                await ServiceLocator.Instance.RegisterService<AudioManager>(audioManager);
+                RegisterInitializable(audioManager);
             }
 
-            // 📦 Реєстрація сервісів
-            await ServiceLocator.Instance.RegisterService<UIPanelRegistry>(panelRegistry);
-            await ServiceLocator.Instance.RegisterService<UIPanelFactory>(panelFactory);
+            // Save Manager
+            var saveManager = FindFirstObjectByType<SaveManager>();
+            if (saveManager == null)
+            {
+                var saveManagerGO = new GameObject("SaveManager");
+                saveManagerGO.transform.SetParent(transform, false);
+                saveManager = saveManagerGO.AddComponent<SaveManager>();
+            }
 
-            // 🚀 Ініціалізація сервісів
-            await panelRegistry.Initialize();
-            await panelFactory.Initialize();
+            if (saveManager != null && !ServiceLocator.Instance.HasService<SaveManager>())
+            {
+                await ServiceLocator.Instance.RegisterService<SaveManager>(saveManager);
+                RegisterInitializable(saveManager);
+            }
 
-            CoreLogger.Log("UI", "✅ UI Panel Services initialized");
-        }
-
-
-        private async Task InitializeInputSchemeManager()
-        {
+            // Input Scheme Manager
             var inputManager = FindFirstObjectByType<InputSchemeManager>();
-
             if (inputManager == null)
             {
-                var go = new GameObject("InputSchemeManager");
-                go.transform.SetParent(transform);
-                inputManager = go.AddComponent<InputSchemeManager>();
+                var inputManagerGO = new GameObject("InputSchemeManager");
+                inputManagerGO.transform.SetParent(transform, false);
+                inputManager = inputManagerGO.AddComponent<InputSchemeManager>();
             }
 
-            if (inputManager != null)
+            if (inputManager != null && !ServiceLocator.Instance.HasService<InputSchemeManager>())
             {
                 await ServiceLocator.Instance.RegisterService<InputSchemeManager>(inputManager);
-                CoreLogger.Log("APP", "✅ InputSchemeManager initialized");
+                RegisterInitializable(inputManager);
+            }
+
+            // Input Action Handler
+            var inputHandler = FindFirstObjectByType<InputActionHandler>();
+            if (inputHandler == null)
+            {
+                var handlerGO = new GameObject("InputActionHandler");
+                handlerGO.transform.SetParent(transform, false);
+                inputHandler = handlerGO.AddComponent<InputActionHandler>();
+            }
+
+            if (inputHandler != null && !ServiceLocator.Instance.HasService<InputActionHandler>())
+            {
+                await ServiceLocator.Instance.RegisterService<InputActionHandler>(inputHandler);
+                RegisterInitializable(inputHandler);
+
+                // Підписка на події
+                inputHandler.onPause.AddListener(() => {
+                    EventBus.Emit("UI/ShowPanel", "SettingsPanel");
+                });
+
+                inputHandler.onCancel.AddListener(() => {
+                    EventBus.Emit("Input/Cancel");
+                });
             }
         }
 
-       
         public void RegisterInitializable(IInitializable initializable)
         {
             if (!_initializables.Contains(initializable))
@@ -333,6 +258,5 @@ namespace GameCore.Core
                 CoreLogger.Log("APP", $"Registered initializable: {initializable.GetType().Name}");
             }
         }
-        
     }
 }

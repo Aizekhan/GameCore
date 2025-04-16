@@ -10,16 +10,18 @@ namespace GameCore.Core
     /// Центральний реєстр усіх сервісів у грі.
     /// Забезпечує єдину точку доступу до сервісів без прямих залежностей.
     /// </summary>
-    public class ServiceLocator : MonoBehaviour
+    public class ServiceLocator : MonoBehaviour, IInitializable
     {
         public static ServiceLocator Instance { get; private set; }
 
         private readonly Dictionary<Type, IService> _services = new Dictionary<Type, IService>();
-        private bool _isInitialized = false;
+
+        // Реалізація IInitializable
+        public bool IsInitialized { get; private set; }
+        public int InitializationPriority => 100; // Найвищий пріоритет
 
         private void Awake()
         {
-            if (_isInitialized) return;
             if (Instance != null && Instance != this)
             {
                 Destroy(gameObject);
@@ -27,10 +29,19 @@ namespace GameCore.Core
             }
 
             Instance = this;
-         
+            DontDestroyOnLoad(gameObject);
 
-            CoreLogger.Log("ServiceLocator initialized");
-            _isInitialized = true;
+            CoreLogger.Log("ServiceLocator", "ServiceLocator instance created");
+        }
+
+        /// <summary>
+        /// Ініціалізує ServiceLocator. Викликається App.cs через інтерфейс IInitializable.
+        /// </summary>
+        public async Task Initialize()
+        {
+            CoreLogger.Log("ServiceLocator", "ServiceLocator initialized");
+            IsInitialized = true;
+            await Task.CompletedTask;
         }
 
         /// <summary>
