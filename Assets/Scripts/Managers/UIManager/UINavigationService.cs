@@ -20,6 +20,7 @@ namespace GameCore.Core
 
         private Stack<NavigationEntry> _panelHistory = new Stack<NavigationEntry>();
         private UIPanelFactory _panelFactory;
+        private UIPanelPool _panelPool;
         private UIPanelAnimation _panelAnimation;
         private UIManager _uiManager;
 
@@ -45,6 +46,7 @@ namespace GameCore.Core
         {
             // Отримуємо необхідні сервіси
             _panelFactory = ServiceLocator.Instance.GetService<UIPanelFactory>();
+            _panelPool = ServiceLocator.Instance.GetService<UIPanelPool>();
             _panelAnimation = ServiceLocator.Instance.GetService<UIPanelAnimation>();
             _uiManager = ServiceLocator.Instance.GetService<UIManager>();
 
@@ -133,7 +135,7 @@ namespace GameCore.Core
         /// </summary>
         public async Task NavigateTo(string panelName, UIPanelAnimationType animationType = UIPanelAnimationType.Default, object navigationData = null)
         {
-            if (_uiManager == null || _panelFactory == null)
+            if (_uiManager == null)
                 return;
 
             if (animationType == UIPanelAnimationType.Default)
@@ -141,7 +143,25 @@ namespace GameCore.Core
 
             // Отримуємо поточну панель
             UIPanel currentPanel = _uiManager.GetCurrentPanel();
-            UIPanel targetPanel = _panelFactory.CreatePanel(panelName);
+
+            // Отримуємо нову панель (з пулу або створюємо нову)
+            UIPanel targetPanel;
+
+            if (_panelPool != null)
+            {
+                // Використовуємо пул, якщо він доступний
+                targetPanel = await _panelPool.GetPanel(panelName);
+            }
+            else if (_panelFactory != null)
+            {
+                // Інакше створюємо через фабрику
+                targetPanel = _panelFactory.CreatePanel(panelName);
+            }
+            else
+            {
+                CoreLogger.LogError("UI", "No way to create panels - both UIPanelPool and UIPanelFactory are not available");
+                return;
+            }
 
             if (targetPanel == null)
             {
@@ -166,11 +186,14 @@ namespace GameCore.Core
             // Приховуємо поточну панель
             if (currentPanel != null)
             {
-                await currentPanel.Hide();
+                await _uiManager.HidePanel(currentPanel);
             }
 
             // Показуємо нову панель
             await targetPanel.Show();
+
+            // Оновлюємо поточну панель в UIManager
+            typeof(UIManager).GetField("_currentPanel", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.SetValue(_uiManager, targetPanel);
 
             // Додаємо цей перехід до історії (подія UI/PanelChanged відбудеться автоматично)
             EventBus.Emit("UI/PanelChanged", panelName);
@@ -236,6 +259,22 @@ namespace GameCore.Core
         {
             _panelHistory.Clear();
             CoreLogger.Log("UI", "Navigation history cleared");
+        }
+
+        /// <summary>
+        /// Отримує список всіх панелей в історії навігації
+        /// </summary>
+        public string[] GetNavigationHistory()
+        {
+            var historyArray = new string[_panelHistory.Count];
+            int index = 0;
+
+            foreach (var entry in _panelHistory)
+            {
+                historyArray[index++] = entry.PanelName;
+            }
+
+            return historyArray;
         }
     }
 

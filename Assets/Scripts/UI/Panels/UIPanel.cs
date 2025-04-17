@@ -1,153 +1,132 @@
-// Assets/Scripts/UI/Components/UIPanel.cs
+using System.Collections;
 using System.Threading.Tasks;
 using UnityEngine;
-using GameCore.Core.EventSystem;
-using UnityEngine.UI;
+using TMPro;
+
 
 namespace GameCore.Core
 {
-    /// <summary>
-    /// Базовий клас для всіх UI панелей
-    /// </summary>
-    [RequireComponent(typeof(CanvasGroup))]
     public class UIPanel : MonoBehaviour, IUIPanel
     {
-        [Header("Animation Settings")]
-        [SerializeField] private UIPanelAnimationType showAnimationType = UIPanelAnimationType.Default;
-        [SerializeField] private UIPanelAnimationType hideAnimationType = UIPanelAnimationType.Default;
-        [SerializeField] private float showDuration = -1f; // -1 = використовувати стандартне значення
-        [SerializeField] private float hideDuration = -1f; // -1 = використовувати стандартне значення
-        [SerializeField] private LeanTweenType showEaseType = LeanTweenType.notUsed; // notUsed = використовувати стандартне значення
-        [SerializeField] private LeanTweenType hideEaseType = LeanTweenType.notUsed; // notUsed = використовувати стандартне значення
+        [SerializeField] protected CanvasGroup canvasGroup;
+        [SerializeField] protected string panelId; // Ідентифікатор панелі
 
-        protected CanvasGroup canvasGroup;
-        protected RectTransform rectTransform;
-        protected bool isVisible = false;
-
-        public bool IsVisible => isVisible;
+        protected UIPanelAnimationType showAnimationType = UIPanelAnimationType.Fade;
+        protected UIPanelAnimationType hideAnimationType = UIPanelAnimationType.Fade;
+        protected float showAnimationDuration = 0.3f;
+        protected float hideAnimationDuration = 0.3f;
+        public bool IsVisible => canvasGroup != null && canvasGroup.alpha > 0.01f;
+        public string PanelId => string.IsNullOrEmpty(panelId) ? GetType().Name : panelId;
 
         protected virtual void Awake()
         {
-            canvasGroup = GetComponent<CanvasGroup>();
-            rectTransform = GetComponent<RectTransform>();
+            if (canvasGroup == null)
+                canvasGroup = GetComponent<CanvasGroup>();
+
+            if (canvasGroup == null)
+                canvasGroup = gameObject.AddComponent<CanvasGroup>();
 
             // Початково приховуємо панель
-            canvasGroup.alpha = 0f;
-            canvasGroup.blocksRaycasts = false;
+            canvasGroup.alpha = 0;
             canvasGroup.interactable = false;
-            isVisible = false;
+            canvasGroup.blocksRaycasts = false;
         }
 
-        /// <summary>
-        /// Відображає панель з анімацією
-        /// </summary>
         public virtual async Task Show()
         {
-            // Переконуємося, що компоненти ініціалізовані
-            if (canvasGroup == null) canvasGroup = GetComponent<CanvasGroup>();
-            if (rectTransform == null) rectTransform = GetComponent<RectTransform>();
+            gameObject.SetActive(true);
 
-            // Робимо панель інтерактивною
-            canvasGroup.blocksRaycasts = true;
-            canvasGroup.interactable = true;
+            UIPanelAnimation animation = ServiceLocator.Instance?.GetService<UIPanelAnimation>();
 
-            // Запускаємо анімацію
-            if (UIPanelAnimation.Instance != null)
+            if (animation != null)
             {
-                await UIPanelAnimation.Instance.AnimateShow(
-                    rectTransform, canvasGroup,
-                    showAnimationType, showDuration, showEaseType);
+                await animation.AnimateShow(GetComponent<RectTransform>(), canvasGroup,
+                    showAnimationType, showAnimationDuration);
             }
             else
             {
-                // Якщо анімацій немає, просто відображаємо панель
-                canvasGroup.alpha = 1f;
+                // Проста анімація, якщо UIPanelAnimation недоступна
+                canvasGroup.alpha = 1;
+                canvasGroup.interactable = true;
+                canvasGroup.blocksRaycasts = true;
             }
 
-            OnShow();
-            isVisible = true;
-
-            // Відправляємо подію про відображення панелі
-            EventBus.Emit("UI/PanelShown", gameObject.name);
+            OnPanelShown();
         }
 
-        /// <summary>
-        /// Приховує панель з анімацією
-        /// </summary>
         public virtual async Task Hide()
         {
-            // Перевіряємо, чи панель видима
-            if (!isVisible)
-                return;
+            UIPanelAnimation animation = ServiceLocator.Instance?.GetService<UIPanelAnimation>();
 
-            // Запускаємо анімацію
-            if (UIPanelAnimation.Instance != null)
+            if (animation != null)
             {
-                await UIPanelAnimation.Instance.AnimateHide(
-                    rectTransform, canvasGroup,
-                    hideAnimationType, hideDuration, hideEaseType);
+                await animation.AnimateHide(GetComponent<RectTransform>(), canvasGroup,
+                    hideAnimationType, hideAnimationDuration);
             }
             else
             {
-                // Якщо анімацій немає, просто приховуємо панель
-                canvasGroup.alpha = 0f;
+                // Проста анімація, якщо UIPanelAnimation недоступна
+                canvasGroup.alpha = 0;
+                canvasGroup.interactable = false;
+                canvasGroup.blocksRaycasts = false;
             }
 
-            // Робимо панель неінтерактивною
-            canvasGroup.blocksRaycasts = false;
+            OnPanelHidden();
+        }
+
+        /// <summary>
+        /// Скидає стан панелі для повторного використання з пулу
+        /// </summary>
+        public virtual void Reset()
+        {
+            // Скидаємо стан CanvasGroup
+            canvasGroup.alpha = 0;
             canvasGroup.interactable = false;
+            canvasGroup.blocksRaycasts = false;
 
-            OnHide();
-            isVisible = false;
-
-            // Відправляємо подію про приховання панелі
-            EventBus.Emit("UI/PanelHidden", gameObject.name);
-        }
-
-        /// <summary>
-        /// Викликається після того, як панель стала видимою
-        /// </summary>
-        protected virtual void OnShow()
-        {
-            CoreLogger.Log("UI", $"Panel {gameObject.name} shown");
-        }
-
-        /// <summary>
-        /// Викликається після того, як панель була прихована
-        /// </summary>
-        protected virtual void OnHide()
-        {
-            CoreLogger.Log("UI", $"Panel {gameObject.name} hidden");
-        }
-
-        /// <summary>
-        /// Реєструє панель у UIPanelRegistry при створенні
-        /// </summary>
-        private void Start()
-        {
-            if (ServiceLocator.Instance != null && ServiceLocator.Instance.HasService<UIPanelRegistry>())
+            // Скидаємо стан полів вводу
+            var inputFields = GetComponentsInChildren<TMP_InputField>(true);
+            foreach (var input in inputFields)
             {
-                var registry = ServiceLocator.Instance.GetService<UIPanelRegistry>();
-                registry.RegisterPanel(gameObject.name, gameObject);
+                input.text = string.Empty;
+            }
+
+            // Скидаємо стан перемикачів
+            var toggles = GetComponentsInChildren<UnityEngine.UI.Toggle>(true);
+            foreach (var toggle in toggles)
+            {
+                toggle.isOn = false;
+            }
+
+            // Скидаємо стан слайдерів
+              var sliders = GetComponentsInChildren<UnityEngine.UI.Slider>(true);
+            foreach (var slider in sliders)
+            {
+                slider.value = slider.minValue;
+            }
+
+            // Скидаємо компоненти, що реалізують IResetable
+            var resetables = GetComponentsInChildren<IResetable>(true);
+            foreach (var resetable in resetables)
+            {
+                resetable.ResetState();
             }
         }
 
-        /// <summary>
-        /// Змінює тип анімації панелі під час виконання
-        /// </summary>
         public void SetAnimationType(UIPanelAnimationType showType, UIPanelAnimationType hideType)
         {
             showAnimationType = showType;
             hideAnimationType = hideType;
         }
 
-        /// <summary>
-        /// Змінює тривалості анімацій панелі під час виконання
-        /// </summary>
         public void SetAnimationDurations(float showDuration, float hideDuration)
         {
-            this.showDuration = showDuration;
-            this.hideDuration = hideDuration;
+            showAnimationDuration = showDuration;
+            hideAnimationDuration = hideDuration;
         }
+
+        protected virtual void OnPanelShown() { }
+        protected virtual void OnPanelHidden() { }
     }
+
 }

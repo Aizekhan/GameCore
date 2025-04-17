@@ -26,7 +26,7 @@ namespace GameCore.Core
         {
             if (mainCanvas == null)
             {
-                mainCanvas = Object.FindObjectOfType<Canvas>();
+                mainCanvas = Object.FindFirstObjectByType<Canvas>();
                 if (mainCanvas != null)
                     mainCanvasRect = mainCanvas.GetComponent<RectTransform>();
             }
@@ -44,7 +44,7 @@ namespace GameCore.Core
         {
             if (mainCanvas == null)
             {
-                mainCanvas = Object.FindObjectOfType<Canvas>();
+                mainCanvas = Object.FindFirstObjectByType<Canvas>();
                 if (mainCanvas == null) return Vector2.zero;
             }
 

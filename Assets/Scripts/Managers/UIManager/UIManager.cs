@@ -1,4 +1,4 @@
-﻿// Updated UIManager.cs to remove dependency on FindObjectOfType<Canvas>() and fix CS4014 warning
+﻿// Оновлений UIManager.cs з підтримкою пулу
 using UnityEngine;
 using System.Threading.Tasks;
 using UnityEngine.SceneManagement;
@@ -17,10 +17,14 @@ namespace GameCore.Core
         [SerializeField] private UIPanelAnimationType defaultHideAnimation = UIPanelAnimationType.Fade;
         [SerializeField] private float defaultAnimationDuration = 0.3f;
 
+        [Header("UI Pooling Settings")]
+        [SerializeField] private bool usePooling = true;
+
         public GameObject GlobalFadeOverlay { get; private set; }
 
         private UIPanel _currentPanel;
         private UIPanelAnimation _panelAnimation;
+        private UIPanelPool _panelPool;
         private CanvasGroup _fadeCanvasGroup;
         private RectTransform _fadeRectTransform;
         private bool _isInitialized;
@@ -44,7 +48,7 @@ namespace GameCore.Core
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
-        private async  Task EnsureCanvasExists()
+        private async Task EnsureCanvasExists()
         {
             if (GameObject.Find("UICanvas_Root") == null)
             {
@@ -56,7 +60,6 @@ namespace GameCore.Core
                 DontDestroyOnLoad(canvasGO);
                 CoreLogger.Log("UI", "[UIManager] Canvas created from UIManager");
             }
-            // Додайте цей рядок, щоб прибрати попередження
             await Task.CompletedTask;
         }
 
@@ -73,6 +76,7 @@ namespace GameCore.Core
             EventBus.Subscribe("UI/FadeScreen", OnFadeScreenEvent);
 
             _panelAnimation = ServiceLocator.Instance.GetService<UIPanelAnimation>();
+            _panelPool = ServiceLocator.Instance.GetService<UIPanelPool>();
 
             if (_panelAnimation == null)
             {
@@ -112,20 +116,34 @@ namespace GameCore.Core
                 return null;
             }
 
-            var factory = ServiceLocator.Instance.GetService<UIPanelFactory>();
-            if (factory == null)
-            {
-                CoreLogger.LogError("UI", "UIPanelFactory service not found");
-                return null;
-            }
+            UIPanel panel = null;
 
             if (withFade)
                 await FadeToBlack();
 
             if (_currentPanel != null)
-                await _currentPanel.Hide();
+            {
+                await HidePanel(_currentPanel);
+            }
 
-            var panel = factory.CreatePanel(panelName);
+            // Отримуємо панель з пулу, якщо пулінг увімкнено
+            if (usePooling && _panelPool != null)
+            {
+                panel = await _panelPool.GetPanel(panelName);
+            }
+            else
+            {
+                // Альтернативний варіант - створення через фабрику
+                var factory = ServiceLocator.Instance.GetService<UIPanelFactory>();
+                if (factory == null)
+                {
+                    CoreLogger.LogError("UI", "UIPanelFactory service not found");
+                    return null;
+                }
+
+                panel = factory.CreatePanel(panelName);
+            }
+
             if (panel == null)
             {
                 CoreLogger.LogError("UI", $"Failed to create panel: {panelName}");
@@ -152,12 +170,38 @@ namespace GameCore.Core
             return panel;
         }
 
+        public async Task HidePanel(UIPanel panel)
+        {
+            if (panel == null) return;
+
+            await panel.Hide();
+
+            // Повертаємо панель до пулу, якщо пулінг увімкнено
+            if (usePooling && _panelPool != null)
+            {
+                _panelPool.ReturnToPool(panel);
+            }
+            else
+            {
+                // Знищуємо панель, якщо пулінг вимкнено
+                if (panel != _currentPanel) // Не знищуємо поточну панель, це може статися в інших методах
+                {
+                    Destroy(panel.gameObject);
+                }
+            }
+
+            // Якщо це була поточна панель, скидаємо посилання
+            if (_currentPanel == panel)
+            {
+                _currentPanel = null;
+            }
+        }
+
         public async Task HideAll()
         {
             if (_currentPanel != null)
             {
-                await _currentPanel.Hide();
-                _currentPanel = null;
+                await HidePanel(_currentPanel);
             }
 
             await Task.Run(() => EventBus.Emit("UI/AllPanelsHidden", null));
@@ -268,6 +312,30 @@ namespace GameCore.Core
             image.color = Color.black;
 
             GlobalFadeOverlay.transform.SetAsLastSibling();
+        }
+
+        public void SetUsePooling(bool enabled)
+        {
+            usePooling = enabled;
+            CoreLogger.Log("UI", $"UI Pooling is now {(enabled ? "enabled" : "disabled")}");
+        }
+
+        /// <summary>
+        /// Попереднє завантаження часто використовуваних панелей
+        /// </summary>
+        public async Task PreloadCommonPanels()
+        {
+            if (!usePooling || _panelPool == null)
+                return;
+
+            string[] commonPanels = {
+                "MainMenuPanel",
+                "LoadingPanel",
+                "SettingsPanel",
+                "ErrorPanel"
+            };
+
+            await _panelPool.PreloadPanels(commonPanels);
         }
     }
 }

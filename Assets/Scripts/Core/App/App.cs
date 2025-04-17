@@ -1,6 +1,8 @@
-﻿// App.cs — з реєстрацією UIPanelAnimation
+﻿// Переосмислений App.cs — з автогенерацією сервісів
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -15,59 +17,83 @@ namespace GameCore.Core
     public class App : MonoBehaviour
     {
         [Header("Core Configuration")]
-        [SerializeField] private string mainMenuSceneName = "MainMenu";
+       
         [SerializeField] private bool automaticallyLoadMainMenu = true;
         [SerializeField] private InputActionAsset inputAsset;
 
-        private readonly List<IInitializable> _initializables = new();
+        [Header("Service Configuration")]
+        [SerializeField] private bool autoCreateServices = true;
+        [SerializeField] private List<ServiceDescriptor> manualServices = new List<ServiceDescriptor>();
 
-        private AppStateManager _stateManager;
+        private readonly List<IInitializable> _initializables = new();
         private ServiceLocator _serviceLocator;
-        private PlayerInput _playerInput;
-        private InputSchemeManager _inputManager;
-        private AudioManager _audioManager;
-        private SceneLoader _sceneLoader;
-        private UINavigationService _navigationService;
-        private UIPanelFactory _panelFactory;
-        private UIPanelRegistry _panelRegistry;
-        private UIManager _uiManager;
-        private UIPanelAnimation _panelAnimation;
+
+        // Словник типів сервісів та їх фабричних методів
+        private Dictionary<Type, Func<IService>> _serviceFactories = new Dictionary<Type, Func<IService>>();
+
+        [Serializable]
+        public class ServiceDescriptor
+        {
+            public string serviceName;
+            public GameObject serviceReference;
+            public int priority = 50;
+        }
 
         private void Awake()
         {
             CoreLogger.Log("APP", "Initializing application...");
             DontDestroyOnLoad(gameObject);
 
-            _serviceLocator = GetComponent<ServiceLocator>();
-            _stateManager = GetComponent<AppStateManager>();
-            _inputManager = GetComponent<InputSchemeManager>();
-            _audioManager = GetComponent<AudioManager>();
-            _sceneLoader = GetComponent<SceneLoader>();
-            _panelAnimation = GetComponent<UIPanelAnimation>();
-            _navigationService = GetComponent<UINavigationService>();
-            _panelFactory = GetComponent<UIPanelFactory>();
-            _panelRegistry = GetComponent<UIPanelRegistry>();
-            _uiManager = GetComponent<UIManager>();
-           
+            // Створюємо лише ServiceLocator вручну
+            _serviceLocator = gameObject.AddComponent<ServiceLocator>();
 
-            if (_serviceLocator == null || _stateManager == null || _inputManager == null ||
-                _audioManager == null || _sceneLoader == null || _navigationService == null ||
-                _panelFactory == null || _panelRegistry == null || _uiManager == null || _panelAnimation == null)
-            {
-                Debug.LogError("❌ Missing required components on App prefab");
-                return;
-            }
+            // Реєструємо всі фабрики сервісів
+            RegisterServiceFactories();
 
+            // Створюємо базову інфраструктуру
             InitializeEventSystem();
             InitializeUICanvas();
         }
 
         private async void Start()
         {
-            _stateManager.ChangeState(AppStateManager.AppState.Initializing, false);
             await InitializeAllServices();
             CoreLogger.Log("APP", "✅ Application initialized successfully!");
             EventBus.Emit("App/Ready");
+
+            // Змінюємо стан після ініціалізації всіх сервісів через вже налаштований AppStateManager
+            var stateManager = _serviceLocator.GetService<AppStateManager>();
+            if (stateManager != null)
+            {
+                stateManager.ChangeState(AppStateManager.AppState.Initializing, false);
+
+                if (automaticallyLoadMainMenu)
+                {
+                    // Перехід до головного меню через подію App/Ready
+                    // Підписка робиться в самому AppStateManager
+                }
+            }
+            else
+            {
+                CoreLogger.LogWarning("APP", "AppStateManager not found. Cannot change application state.");
+            }
+        }
+
+        private void RegisterServiceFactories()
+        {
+            // Фабричні методи для створення сервісів
+            _serviceFactories[typeof(AppStateManager)] = () => CreateService<AppStateManager>();
+            _serviceFactories[typeof(InputSchemeManager)] = () => CreateService<InputSchemeManager>();
+            _serviceFactories[typeof(AudioManager)] = () => CreateService<AudioManager>();
+            _serviceFactories[typeof(SceneLoader)] = () => CreateService<SceneLoader>();
+            _serviceFactories[typeof(UINavigationService)] = () => CreateService<UINavigationService>();
+            _serviceFactories[typeof(UIPanelAnimation)] = () => CreateService<UIPanelAnimation>();
+            _serviceFactories[typeof(UIPanelRegistry)] = () => CreateService<UIPanelRegistry>();
+            _serviceFactories[typeof(UIPanelFactory)] = () => CreateService<UIPanelFactory>();
+            _serviceFactories[typeof(UIManager)] = () => CreateService<UIManager>();
+            _serviceFactories[typeof(UIPanelPool)] = () => CreateService<UIPanelPool>();
+
+            // Додати інші сервіси по необхідності
         }
 
         private void InitializeEventSystem()
@@ -79,7 +105,7 @@ namespace GameCore.Core
                 var eventSystem = eventSystemGO.AddComponent<UnityEngine.EventSystems.EventSystem>();
                 var inputModule = eventSystemGO.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
                 inputModule.actionsAsset = inputAsset;
-               
+
                 CoreLogger.Log("APP", "🆕 EventSystem created and linked");
             }
         }
@@ -99,47 +125,102 @@ namespace GameCore.Core
                 scaler.referenceResolution = new Vector2(1920, 1080);
 
                 canvasGO.AddComponent<GraphicRaycaster>();
-                
+
                 CoreLogger.Log("APP", "🆕 UICanvas_Root created");
             }
         }
 
         private async Task InitializeAllServices()
         {
-            await _serviceLocator.RegisterService(_stateManager);
-            await _serviceLocator.RegisterService(_inputManager);
-            await _serviceLocator.RegisterService(_audioManager);
-            await _serviceLocator.RegisterService(_sceneLoader);
-            await _serviceLocator.RegisterService(_panelRegistry);
+            // Крок 1: Створюємо всі сервіси
+            List<IService> createdServices = new List<IService>();
 
-            _panelFactory.SetRegistry(_panelRegistry);
-            _panelFactory.SetPanelRoot(GameObject.Find("UICanvas_Root")?.transform);
+            if (autoCreateServices)
+            {
+                // Автоматично створюємо всі зареєстровані сервіси
+                foreach (var factory in _serviceFactories)
+                {
+                    var service = factory.Value();
+                    if (service != null)
+                    {
+                        createdServices.Add(service);
+                    }
+                }
+            }
 
-            await _serviceLocator.RegisterService(_panelFactory);
-            await _serviceLocator.RegisterService(_uiManager);
-            await _serviceLocator.RegisterService(_panelAnimation);
+            // Додаємо ручно вказані сервіси (з інспектора)
+            foreach (var descriptor in manualServices)
+            {
+                if (descriptor.serviceReference != null)
+                {
+                    var service = descriptor.serviceReference.GetComponent<IService>();
+                    if (service != null && !createdServices.Contains(service))
+                    {
+                        createdServices.Add(service);
+                    }
+                }
+            }
 
-            RegisterInitializable(_stateManager);
-            RegisterInitializable(_inputManager);
-            RegisterInitializable(_audioManager);
-            RegisterInitializable(_sceneLoader);
-            RegisterInitializable(_panelRegistry);
-            RegisterInitializable(_panelFactory);
-            RegisterInitializable(_uiManager);
-            RegisterInitializable(_panelAnimation);
+            // Крок 2: Реєструємо всі сервіси
+            foreach (var service in createdServices)
+            {
+                await _serviceLocator.RegisterService(service);
 
+                // Якщо сервіс ініціалізований, додаємо його до списку
+                if (service is IInitializable initializable)
+                {
+                    RegisterInitializable(initializable);
+                }
+            }
+
+            // Крок 3: Спеціальна обробка для сервісів, які потребують додаткової конфігурації
+            ConfigureSpecialServices();
+
+            // Крок 4: Створюємо платформозалежні сервіси
             await InitializePlatformService();
+
+            // Крок 5: Ініціалізуємо системи вводу
             await InitializePlayerInput();
 
-            await _serviceLocator.RegisterService(_navigationService);
-            RegisterInitializable(_navigationService);
+            // Крок 6: Ініціалізуємо UI-пул (якщо є)
+            await InitializeUIPanelPool();
 
+            // Крок 7: Запускаємо ініціалізацію всіх сервісів у правильному порядку
             _initializables.Sort((a, b) => b.InitializationPriority.CompareTo(a.InitializationPriority));
             foreach (var init in _initializables.Where(i => !i.IsInitialized))
             {
                 CoreLogger.Log("APP", $"Initializing {init.GetType().Name}...");
                 await init.Initialize();
             }
+        }
+
+        private async Task InitializeUIPanelPool()
+        {
+            // Перевіряємо, чи є пул у ServiceLocator
+            var panelPool = _serviceLocator.GetService<UIPanelPool>();
+
+            // Якщо немає, створюємо новий
+            if (panelPool == null && autoCreateServices)
+            {
+                panelPool = CreateService<UIPanelPool>();
+                await _serviceLocator.RegisterService(panelPool);
+                RegisterInitializable(panelPool);
+            }
+        }
+
+        private void ConfigureSpecialServices()
+        {
+            // Налаштування UIPanelFactory
+            var panelFactory = _serviceLocator.GetService<UIPanelFactory>();
+            var panelRegistry = _serviceLocator.GetService<UIPanelRegistry>();
+
+            if (panelFactory != null && panelRegistry != null)
+            {
+                panelFactory.SetRegistry(panelRegistry);
+                panelFactory.SetPanelRoot(GameObject.Find("UICanvas_Root")?.transform);
+            }
+
+            // Інші спеціальні налаштування для інших сервісів
         }
 
         private async Task InitializePlatformService()
@@ -161,13 +242,30 @@ namespace GameCore.Core
 
         private async Task InitializePlayerInput()
         {
+            // Отримуємо InputSchemeManager
+            var inputManager = _serviceLocator.GetService<InputSchemeManager>();
+            if (inputManager == null) return;
+
+            // Створюємо PlayerInput
             var inputGO = new GameObject("PlayerInput");
             inputGO.transform.SetParent(transform, false);
-            _playerInput = inputGO.AddComponent<PlayerInput>();
-            _playerInput.actions = inputAsset;
-            _playerInput.defaultControlScheme = "Keyboard&Mouse";
-            _inputManager.SetPlayerInput(_playerInput);
+            var playerInput = inputGO.AddComponent<PlayerInput>();
+            playerInput.actions = inputAsset;
+            playerInput.defaultControlScheme = "Keyboard&Mouse";
+            inputManager.SetPlayerInput(playerInput);
+
             await Task.CompletedTask;
+        }
+
+        private T CreateService<T>() where T : MonoBehaviour, IService
+        {
+            // Створюємо новий GameObject для сервісу
+            string serviceName = typeof(T).Name;
+            var serviceGO = new GameObject(serviceName);
+            serviceGO.transform.SetParent(transform);
+
+            // Додаємо компонент і повертаємо його
+            return serviceGO.AddComponent<T>();
         }
 
         public void RegisterInitializable(IInitializable initializable)
@@ -177,6 +275,12 @@ namespace GameCore.Core
                 _initializables.Add(initializable);
                 CoreLogger.Log("APP", $"✅ Registered: {initializable.GetType().Name}");
             }
+        }
+
+        // Метод для отримання сервісу за типом
+        public T GetService<T>() where T : class, IService
+        {
+            return _serviceLocator.GetService<T>();
         }
     }
 }
