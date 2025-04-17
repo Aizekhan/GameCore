@@ -190,13 +190,12 @@ namespace GameCore.Core
         /// </summary>
         private void Start()
         {
-            if (ServiceLocator.Instance != null && ServiceLocator.Instance.HasService<UIPanelRegistry>())
-            {
-                var registry = ServiceLocator.Instance.GetService<UIPanelRegistry>();
-                registry.RegisterPanel(gameObject.name, gameObject);
-            }
+            OnPanelInitialized();
         }
-
+        protected virtual void OnPanelInitialized()
+        {
+            // Можна перевизначити в дочірніх класах для додаткової ініціалізації
+        }
         /// <summary>
         /// Змінює тип анімації панелі під час виконання
         /// </summary>

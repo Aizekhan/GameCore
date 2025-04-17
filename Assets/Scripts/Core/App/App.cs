@@ -1,5 +1,4 @@
-﻿// Переосмислений App.cs — з автогенерацією сервісів
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -17,19 +16,22 @@ namespace GameCore.Core
     public class App : MonoBehaviour
     {
         [Header("Core Configuration")]
-
         [SerializeField] private bool automaticallyLoadMainMenu = true;
         [SerializeField] private InputActionAsset inputAsset;
 
         [Header("Service Configuration")]
         [SerializeField] private bool autoCreateServices = true;
         [SerializeField] private List<ServiceDescriptor> manualServices = new List<ServiceDescriptor>();
+
         private UnityEngine.InputSystem.PlayerInput _playerInput;
         private readonly List<IInitializable> _initializables = new();
         private ServiceLocator _serviceLocator;
 
         // Словник типів сервісів та їх фабричних методів
         private Dictionary<Type, Func<IService>> _serviceFactories = new Dictionary<Type, Func<IService>>();
+
+        // Відстеження зареєстрованих сервісів для уникнення дублювання
+        private HashSet<Type> _registeredServiceTypes = new HashSet<Type>();
 
         [Serializable]
         public class ServiceDescriptor
@@ -95,6 +97,10 @@ namespace GameCore.Core
             _serviceFactories[typeof(UIButtonRegistry)] = () => CreateService<UIButtonRegistry>();
             _serviceFactories[typeof(UIButtonFactory)] = () => CreateService<UIButtonFactory>();
 
+            // Додаємо ResourceManager і ResourceBundleManager до фабрик
+            _serviceFactories[typeof(ResourceManager)] = () => CreateService<ResourceManager>();
+            _serviceFactories[typeof(ResourceBundleManager)] = () => CreateService<ResourceBundleManager>();
+
             // Додати інші сервіси по необхідності
         }
 
@@ -134,7 +140,8 @@ namespace GameCore.Core
 
         private async Task InitializeAllServices()
         {
-            CoreLogger.Log("InitializeAllServices started!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            CoreLogger.Log("APP", "Starting service initialization");
+
             // Створюємо і реєструємо критичні сервіси в правильному порядку
             await RegisterCriticalServices();
 
@@ -152,11 +159,17 @@ namespace GameCore.Core
                     typeof(UIButtonRegistry),
                     typeof(UIButtonFactory),
                     typeof(UIPanelAnimation),
-                    typeof(UINavigationService)
+                    typeof(UINavigationService),
+                    typeof(ResourceManager),
+                    typeof(ResourceBundleManager)
                 };
 
-                foreach (var factory in _serviceFactories.Where(f => !criticalTypes.Contains(f.Key)))
+                foreach (var factory in _serviceFactories.Where(keyValuePair => !criticalTypes.Contains(keyValuePair.Key)))
                 {
+                    // Перевіряємо, чи сервіс уже зареєстрований
+                    if (_registeredServiceTypes.Contains(factory.Key))
+                        continue;
+
                     var service = factory.Value();
                     if (service != null)
                     {
@@ -171,7 +184,10 @@ namespace GameCore.Core
                 if (descriptor.serviceReference != null)
                 {
                     var service = descriptor.serviceReference.GetComponent<IService>();
-                    if (service != null && !createdServices.Contains(service))
+                    Type serviceType = service?.GetType();
+
+                    // Перевіряємо, чи не зареєстрований вже цей тип сервісу
+                    if (service != null && serviceType != null && !_registeredServiceTypes.Contains(serviceType))
                     {
                         createdServices.Add(service);
                     }
@@ -181,7 +197,14 @@ namespace GameCore.Core
             // Реєструємо створені сервіси
             foreach (var service in createdServices)
             {
+                Type serviceType = service.GetType();
+
+                // Пропускаємо вже зареєстровані сервіси
+                if (_registeredServiceTypes.Contains(serviceType))
+                    continue;
+
                 await _serviceLocator.RegisterService(service);
+                _registeredServiceTypes.Add(serviceType);
 
                 if (service is IInitializable initializable)
                 {
@@ -197,10 +220,20 @@ namespace GameCore.Core
 
             // Запускаємо ініціалізацію всіх сервісів у правильному порядку
             _initializables.Sort((a, b) => b.InitializationPriority.CompareTo(a.InitializationPriority));
+
+            CoreLogger.Log("APP", $"Initializing {_initializables.Count} services...");
+
             foreach (var init in _initializables.Where(i => !i.IsInitialized))
             {
-                CoreLogger.Log("APP", $"Initializing {init.GetType().Name}...");
-                await init.Initialize();
+                try
+                {
+                    CoreLogger.Log("APP", $"Initializing {init.GetType().Name}...");
+                    await init.Initialize();
+                }
+                catch (Exception ex)
+                {
+                    CoreLogger.LogError("APP", $"Failed to initialize {init.GetType().Name}: {ex.Message}");
+                }
             }
 
             // Попереднє завантаження панелей (після ініціалізації всіх сервісів)
@@ -214,10 +247,33 @@ namespace GameCore.Core
         // Новий метод для реєстрації критичних UI сервісів у правильному порядку
         private async Task RegisterCriticalServices()
         {
+            // Спочатку ResourceManager, оскільки інші сервіси можуть від нього залежати
+            if (!_serviceLocator.HasService<ResourceManager>())
+            {
+                var resourceManager = CreateService<ResourceManager>();
+                await _serviceLocator.RegisterService(resourceManager);
+                _registeredServiceTypes.Add(typeof(ResourceManager));
+                RegisterInitializable(resourceManager);
+
+                CoreLogger.Log("APP", "✅ ResourceManager registered");
+            }
+
+            // Потім ResourceBundleManager, він залежить від ResourceManager
+            if (!_serviceLocator.HasService<ResourceBundleManager>())
+            {
+                var bundleManager = CreateService<ResourceBundleManager>();
+                await _serviceLocator.RegisterService(bundleManager);
+                _registeredServiceTypes.Add(typeof(ResourceBundleManager));
+                RegisterInitializable(bundleManager);
+
+                CoreLogger.Log("APP", "✅ ResourceBundleManager registered");
+            }
+
             if (!_serviceLocator.HasService<UIPanelRegistry>())
             {
                 var panelRegistry = CreateService<UIPanelRegistry>();
                 await _serviceLocator.RegisterService(panelRegistry);
+                _registeredServiceTypes.Add(typeof(UIPanelRegistry));
                 RegisterInitializable(panelRegistry);
             }
 
@@ -227,6 +283,7 @@ namespace GameCore.Core
                 panelFactory.SetRegistry(_serviceLocator.GetService<UIPanelRegistry>());
                 panelFactory.SetPanelRoot(GameObject.Find("UICanvas_Root")?.transform);
                 await _serviceLocator.RegisterService(panelFactory);
+                _registeredServiceTypes.Add(typeof(UIPanelFactory));
                 RegisterInitializable(panelFactory);
             }
 
@@ -234,6 +291,7 @@ namespace GameCore.Core
             {
                 var buttonRegistry = CreateService<UIButtonRegistry>();
                 await _serviceLocator.RegisterService(buttonRegistry);
+                _registeredServiceTypes.Add(typeof(UIButtonRegistry));
                 RegisterInitializable(buttonRegistry);
             }
 
@@ -242,6 +300,7 @@ namespace GameCore.Core
                 var buttonFactory = CreateService<UIButtonFactory>();
                 buttonFactory.SetButtonPrefabPath("UI/Prefabs/StandardButton");
                 await _serviceLocator.RegisterService(buttonFactory);
+                _registeredServiceTypes.Add(typeof(UIButtonFactory));
                 RegisterInitializable(buttonFactory);
             }
 
@@ -249,6 +308,7 @@ namespace GameCore.Core
             {
                 var panelPool = CreateService<UIPanelPool>();
                 await _serviceLocator.RegisterService(panelPool);
+                _registeredServiceTypes.Add(typeof(UIPanelPool));
                 RegisterInitializable(panelPool);
             }
 
@@ -256,6 +316,7 @@ namespace GameCore.Core
             {
                 var panelAnimation = CreateService<UIPanelAnimation>();
                 await _serviceLocator.RegisterService(panelAnimation);
+                _registeredServiceTypes.Add(typeof(UIPanelAnimation));
                 RegisterInitializable(panelAnimation);
             }
 
@@ -263,6 +324,7 @@ namespace GameCore.Core
             {
                 var uiManager = CreateService<UIManager>();
                 await _serviceLocator.RegisterService(uiManager);
+                _registeredServiceTypes.Add(typeof(UIManager));
                 RegisterInitializable(uiManager);
             }
 
@@ -270,6 +332,7 @@ namespace GameCore.Core
             {
                 var navigationService = CreateService<UINavigationService>();
                 await _serviceLocator.RegisterService(navigationService);
+                _registeredServiceTypes.Add(typeof(UINavigationService));
                 RegisterInitializable(navigationService);
             }
 
@@ -279,6 +342,7 @@ namespace GameCore.Core
             {
                 var appStateManager = CreateService<AppStateManager>();
                 await _serviceLocator.RegisterService(appStateManager);
+                _registeredServiceTypes.Add(typeof(AppStateManager));
                 RegisterInitializable(appStateManager);
             }
 
@@ -286,6 +350,7 @@ namespace GameCore.Core
             {
                 var inputManager = CreateService<InputSchemeManager>();
                 await _serviceLocator.RegisterService(inputManager);
+                _registeredServiceTypes.Add(typeof(InputSchemeManager));
                 RegisterInitializable(inputManager);
             }
 
@@ -293,6 +358,7 @@ namespace GameCore.Core
             {
                 var sceneLoader = CreateService<SceneLoader>();
                 await _serviceLocator.RegisterService(sceneLoader);
+                _registeredServiceTypes.Add(typeof(SceneLoader));
                 RegisterInitializable(sceneLoader);
             }
 
@@ -300,10 +366,10 @@ namespace GameCore.Core
             {
                 var audioManager = CreateService<AudioManager>();
                 await _serviceLocator.RegisterService(audioManager);
+                _registeredServiceTypes.Add(typeof(AudioManager));
                 RegisterInitializable(audioManager);
             }
         }
-
 
         private async Task InitializeUIPanelPool()
         {
@@ -315,6 +381,7 @@ namespace GameCore.Core
             {
                 panelPool = CreateService<UIPanelPool>();
                 await _serviceLocator.RegisterService(panelPool);
+                _registeredServiceTypes.Add(typeof(UIPanelPool));
                 RegisterInitializable(panelPool);
             }
         }
@@ -340,6 +407,7 @@ namespace GameCore.Core
             {
                 var platformDetector = FindFirstObjectByType<PlatformDetector>() ?? CreatePlatformDetector();
                 await _serviceLocator.RegisterService<IPlatformService>(platformDetector);
+                _registeredServiceTypes.Add(typeof(IPlatformService));
                 RegisterInitializable(platformDetector);
             }
         }
@@ -383,6 +451,7 @@ namespace GameCore.Core
                 inputSchemeManager.SetPlayerInput(_playerInput);
 
                 await _serviceLocator.RegisterService(inputSchemeManager);
+                _registeredServiceTypes.Add(typeof(InputSchemeManager));
                 RegisterInitializable(inputSchemeManager);
             }
         }

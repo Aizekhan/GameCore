@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 using GameCore.Core.EventSystem;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using System;
 
 namespace GameCore.Core
 {
@@ -108,11 +109,11 @@ namespace GameCore.Core
         }
 
         public async Task<UIPanel> ShowPanelByName(string panelName, bool withFade = true,
-            UIPanelAnimationType showAnimationType = UIPanelAnimationType.Default)
+     UIPanelAnimationType showAnimationType = UIPanelAnimationType.Default)
         {
             if (string.IsNullOrEmpty(panelName))
             {
-                CoreLogger.LogWarning("UI", "Attempt to show panel with empty name");
+                CoreLogger.LogWarning("UI", "Спроба відобразити панель з порожнім іменем");
                 return null;
             }
 
@@ -126,27 +127,65 @@ namespace GameCore.Core
                 await HidePanel(_currentPanel);
             }
 
-            // Отримуємо панель з пулу, якщо пулінг увімкнено
-            if (usePooling && _panelPool != null)
+            // Спочатку перевіряємо чи є ResourceManager і пробуємо через нього
+            var resourceManager = ServiceLocator.Instance?.GetService<ResourceManager>();
+            if (resourceManager != null)
             {
-                panel = await _panelPool.GetPanel(panelName);
-            }
-            else
-            {
-                // Альтернативний варіант - створення через фабрику
-                var factory = ServiceLocator.Instance.GetService<UIPanelFactory>();
-                if (factory == null)
+                try
                 {
-                    CoreLogger.LogError("UI", "UIPanelFactory service not found");
-                    return null;
-                }
+                    // Отримуємо панель через ResourceManager
+                    if (usePooling && _panelPool != null)
+                    {
+                        panel = await _panelPool.GetPanel(panelName);
+                    }
+                    else
+                    {
+                        // Використовуємо ResourceRequest для завантаження панелі
+                        var request = resourceManager.CreateRequest<GameObject>(
+                            ResourceManager.ResourceType.UI,
+                            $"Panels/{panelName}",
+                            true // instantiate
+                        );
 
-                panel = factory.CreatePanel(panelName);
+                        GameObject panelGo = await request.GetResultAsync();
+                        if (panelGo != null)
+                        {
+                            // Забезпечуємо правильного батька для UI
+                            panelGo.transform.SetParent(GameObject.Find("UICanvas_Root")?.transform);
+                            panel = panelGo.GetComponent<UIPanel>();
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    CoreLogger.LogWarning("UI", $"Помилка завантаження панелі через ResourceManager: {ex.Message}. Повертаємось до стандартного методу.");
+                }
+            }
+
+            // Якщо не вдалося завантажити через ResourceManager, використовуємо старий метод
+            if (panel == null)
+            {
+                if (usePooling && _panelPool != null)
+                {
+                    panel = await _panelPool.GetPanel(panelName);
+                }
+                else
+                {
+                    // Альтернативний варіант - створення через фабрику
+                    var factory = ServiceLocator.Instance.GetService<UIPanelFactory>();
+                    if (factory == null)
+                    {
+                        CoreLogger.LogError("UI", "Сервіс UIPanelFactory не знайдено");
+                        return null;
+                    }
+
+                    panel = factory.CreatePanel(panelName);
+                }
             }
 
             if (panel == null)
             {
-                CoreLogger.LogError("UI", $"Failed to create panel: {panelName}");
+                CoreLogger.LogError("UI", $"Не вдалося створити панель: {panelName}");
                 return null;
             }
 
@@ -323,19 +362,58 @@ namespace GameCore.Core
         /// <summary>
         /// Попереднє завантаження часто використовуваних панелей
         /// </summary>
+        public async Task PreloadPanelsWithResourceManager(string[] panelNames, int countPerType = 1)
+        {
+            var resourceManager = ServiceLocator.Instance?.GetService<ResourceManager>();
+            if (resourceManager == null || !usePooling || _panelPool == null)
+                return;
+
+            foreach (var panelName in panelNames)
+            {
+                try
+                {
+                    await resourceManager.PreloadAsync(
+                        ResourceManager.ResourceType.UI,
+                        $"Panels/{panelName}",
+                        countPerType
+                    );
+
+                    CoreLogger.Log("UI", $"Попередньо завантажено {countPerType} екземплярів {panelName} через ResourceManager");
+                }
+                catch (Exception ex)
+                {
+                    CoreLogger.LogWarning("UI", $"Помилка попереднього завантаження {panelName}: {ex.Message}");
+                }
+            }
+        }
         public async Task PreloadCommonPanels()
         {
             if (!usePooling || _panelPool == null)
                 return;
 
-            string[] commonPanels = {
-                "MainMenuPanel",
-                "LoadingPanel",
-                "SettingsPanel",
-                "ErrorPanel"
-            };
+            // Перевіряємо наявність ResourceManager
+            var resourceManager = ServiceLocator.Instance?.GetService<ResourceManager>();
+            bool useResourceManager = resourceManager != null;
 
-            await _panelPool.PreloadPanels(commonPanels);
+            string[] commonPanels = {
+        "MainMenuPanel",
+        "LoadingPanel",
+        "SettingsPanel",
+        "ErrorPanel"
+    };
+
+            if (useResourceManager)
+            {
+                // Використовуємо ResourceManager для попереднього завантаження
+                await PreloadPanelsWithResourceManager(commonPanels);
+                CoreLogger.Log("UI", "Загальні панелі попередньо завантажені через ResourceManager");
+            }
+            else
+            {
+                // Використовуємо стандартний пул для попереднього завантаження
+                await _panelPool.PreloadPanels(commonPanels);
+                CoreLogger.Log("UI", "Загальні панелі попередньо завантажені через пул панелей");
+            }
         }
     }
 }

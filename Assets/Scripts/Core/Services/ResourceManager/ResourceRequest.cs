@@ -1,4 +1,3 @@
-// Assets/Scripts/Core/Services/ResourceManager/ResourceRequest.cs
 using System;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -7,7 +6,7 @@ using Object = UnityEngine.Object;
 namespace GameCore.Core
 {
     /// <summary>
-    /// Клас для обробки завантаження ресурсів з підтримкою прогресу і колбеків.
+    /// Клас запиту ресурсу, який дозволяє відстежувати стан та прогрес завантаження.
     /// </summary>
     public class ResourceRequest<T> where T : Object
     {
@@ -20,24 +19,16 @@ namespace GameCore.Core
         private readonly Transform _parent;
 
         private float _progress;
-        private TaskCompletionSource<T> _completionSource;
-        private Action<float> _progressCallback;
-        private Action<T> _completionCallback;
+        private bool _isComplete;
+        private T _result;
+        private GameObject _instantiatedObject;
+        private Exception _error;
 
-        /// <summary>
-        /// Поточний прогрес завантаження (0-1)
-        /// </summary>
         public float Progress => _progress;
-
-        /// <summary>
-        /// Чи завершено завантаження
-        /// </summary>
-        public bool IsDone { get; private set; }
-
-        /// <summary>
-        /// Завантажений ресурс
-        /// </summary>
-        public T Result { get; private set; }
+        public bool IsComplete => _isComplete;
+        public T Result => _result;
+        public GameObject InstantiatedObject => _instantiatedObject;
+        public Exception Error => _error;
 
         public ResourceRequest(
             ResourceManager resourceManager,
@@ -55,80 +46,72 @@ namespace GameCore.Core
             _position = position;
             _rotation = rotation;
             _parent = parent;
-            _completionSource = new TaskCompletionSource<T>();
+
+            _progress = 0f;
+            _isComplete = false;
         }
 
         /// <summary>
-        /// Додає колбек для відстеження прогресу завантаження.
+        /// Асинхронне завантаження ресурсу з поверненням результату.
         /// </summary>
-        public ResourceRequest<T> OnProgress(Action<float> callback)
+        public async Task<T> GetResultAsync()
         {
-            _progressCallback = callback;
-            return this;
-        }
+            if (_isComplete)
+            {
+                if (_error != null)
+                    throw _error;
 
-        /// <summary>
-        /// Додає колбек, який буде викликаний після завершення завантаження.
-        /// </summary>
-        public ResourceRequest<T> OnCompletion(Action<T> callback)
-        {
-            _completionCallback = callback;
-            return this;
-        }
+                return _result;
+            }
 
-        /// <summary>
-        /// Починає завантаження ресурсу.
-        /// </summary>
-        public async Task<T> StartLoading()
-        {
             try
             {
-                await UpdateProgress(0.1f);
+                // Завантаження ресурсу
+                _result = await _resourceManager.LoadAsync<T>(_resourceType, _resourceName);
+                _progress = 0.5f;
 
-                if (_instantiate && typeof(T) == typeof(GameObject))
+                if (_result != null && _instantiate && _result is GameObject prefab)
                 {
-                    var result = await _resourceManager.InstantiateAsync(_resourceType, _resourceName, _position, _rotation, _parent);
-                    await UpdateProgress(1f);
-                    Result = result as T;
-                    IsDone = true;
-                    _completionCallback?.Invoke(Result);
-                    _completionSource.TrySetResult(Result);
+                    // Інстанціювання об'єкта, якщо потрібно
+                    _instantiatedObject = GameObject.Instantiate(prefab, _position, _rotation, _parent);
+                    _progress = 1f;
+                    _isComplete = true;
+
+                    // Повертаємо інстанційований об'єкт, якщо запитувався GameObject
+                    if (typeof(T) == typeof(GameObject))
+                    {
+                        return _instantiatedObject as T;
+                    }
                 }
                 else
                 {
-                    await UpdateProgress(0.5f);
-                    var result = await _resourceManager.LoadAsync<T>(_resourceType, _resourceName);
-                    await UpdateProgress(1f);
-                    Result = result;
-                    IsDone = true;
-                    _completionCallback?.Invoke(Result);
-                    _completionSource.TrySetResult(Result);
+                    _progress = 1f;
+                    _isComplete = true;
                 }
 
-                return Result;
+                return _result;
             }
             catch (Exception ex)
             {
-                CoreLogger.LogError("RESOURCE", $"Помилка завантаження ресурсу {_resourceName}: {ex.Message}");
-                _completionSource.TrySetException(ex);
+                _error = ex;
+                _isComplete = true;
                 throw;
             }
         }
 
         /// <summary>
-        /// Повертає Task, який завершиться після завантаження ресурсу.
+        /// Скасовує завантаження та звільняє ресурси.
         /// </summary>
-        public Task<T> WaitForCompletion()
+        public void Cancel()
         {
-            return _completionSource.Task;
-        }
+            if (_isComplete && _instantiatedObject != null)
+            {
+                GameObject.Destroy(_instantiatedObject);
+                _instantiatedObject = null;
+            }
 
-        private async Task UpdateProgress(float progress)
-        {
-            _progress = progress;
-            _progressCallback?.Invoke(progress);
-            // Невелика затримка, щоб симулювати завантаження для тестування колбеків
-            await Task.Delay(10);
+            _result = null;
+            _isComplete = true;
         }
     }
 }

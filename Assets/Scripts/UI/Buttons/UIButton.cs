@@ -36,6 +36,8 @@ namespace GameCore.Core
 
         public Button Button => _button;
         public string ButtonCategory => buttonCategory;
+        private bool _isInitialized = false;
+        private bool _isRegistered = false;
 
         private void Awake()
         {
@@ -52,16 +54,25 @@ namespace GameCore.Core
 
         private void LazyInit()
         {
-            _audioManager ??= ServiceLocator.Instance?.GetService<AudioManager>();
-            _navigationService ??= ServiceLocator.Instance?.GetService<UINavigationService>();
-            _buttonRegistry ??= ServiceLocator.Instance?.GetService<UIButtonRegistry>();
+            if (_isInitialized) return;
+
+            _audioManager = ServiceLocator.Instance?.GetService<AudioManager>();
+            _navigationService = ServiceLocator.Instance?.GetService<UINavigationService>();
+            _buttonRegistry = ServiceLocator.Instance?.GetService<UIButtonRegistry>();
+
+            _isInitialized = true;
         }
 
         private void RegisterInButtonRegistry()
         {
-            _buttonRegistry?.RegisterButton(this, buttonCategory);
-        }
+            if (_isRegistered) return;
 
+            if (_buttonRegistry != null && !string.IsNullOrEmpty(buttonCategory))
+            {
+                _buttonRegistry.RegisterButton(this, buttonCategory);
+                _isRegistered = true;
+            }
+        }
         public void OnPointerEnter(PointerEventData eventData)
         {
             if (!_button.interactable) return;
