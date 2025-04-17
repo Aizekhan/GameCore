@@ -149,6 +149,7 @@ GameObject:
   - component: {fileID: 2001035742426340057}
   - component: {fileID: 7523969206782368489}
   - component: {fileID: 869370970362481475}
+  - component: {fileID: 5320231564769161641}
   m_Layer: 5
   m_Name: '[SetiingPanel] StandardButton'
   m_TagString: Untagged
@@ -279,3 +280,52 @@ MonoBehaviour:
   useHoverAnimation: 1
   hoverScale: 1.05
   animationSpeed: 10
+--- !u!114 &5320231564769161641
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8330912924741135062}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c03ea50c32519de49aa3cba69dce509a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playOnEnable: 1
+  startDelay: 0
+  loopDelay: 0
+  loop: 0
+  destroyOnComplete: 0
+  useScale: 0
+  useRotation: 0
+  usePosition: 0
+  useAlpha: 0
+  useColor: 0
+  fromScale: {x: 0, y: 0, z: 0}
+  toScale: {x: 1, y: 1, z: 1}
+  scaleDuration: 0.5
+  scaleEaseType: 27
+  fromRotation: {x: 0, y: 0, z: 0}
+  toRotation: {x: 0, y: 0, z: 360}
+  rotationDuration: 0.5
+  rotationEaseType: 6
+  fromPosition: {x: 0, y: 0, z: 0}
+  toPosition: {x: 0, y: 0, z: 0}
+  useRelativePosition: 1
+  positionDuration: 0.5
+  positionEaseType: 6
+  fromAlpha: 0
+  toAlpha: 1
+  alphaDuration: 0.5
+  alphaEaseType: 6
+  fromColor: {r: 1, g: 1, b: 1, a: 1}
+  toColor: {r: 1, g: 1, b: 1, a: 1}
+  colorDuration: 0.5
+  colorEaseType: 6
+  onAnimationStart:
+    m_PersistentCalls:
+      m_Calls: []
+  onAnimationComplete:
+    m_PersistentCalls:
+      m_Calls: []

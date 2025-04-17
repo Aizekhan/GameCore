@@ -17,7 +17,7 @@ namespace GameCore.Core
     public class App : MonoBehaviour
     {
         [Header("Core Configuration")]
-       
+
         [SerializeField] private bool automaticallyLoadMainMenu = true;
         [SerializeField] private InputActionAsset inputAsset;
 
@@ -92,6 +92,8 @@ namespace GameCore.Core
             _serviceFactories[typeof(UIPanelFactory)] = () => CreateService<UIPanelFactory>();
             _serviceFactories[typeof(UIManager)] = () => CreateService<UIManager>();
             _serviceFactories[typeof(UIPanelPool)] = () => CreateService<UIPanelPool>();
+            _serviceFactories[typeof(UIButtonRegistry)] = () => CreateService<UIButtonRegistry>();
+            _serviceFactories[typeof(UIButtonFactory)] = () => CreateService<UIButtonFactory>();
 
             // Додати інші сервіси по необхідності
         }
@@ -132,13 +134,27 @@ namespace GameCore.Core
 
         private async Task InitializeAllServices()
         {
-            // Крок 1: Створюємо всі сервіси
+            // Створюємо і реєструємо критичні сервіси в правильному порядку
+            await RegisterCriticalServices();
+
+            // Створюємо решту сервісів
             List<IService> createdServices = new List<IService>();
 
             if (autoCreateServices)
             {
-                // Автоматично створюємо всі зареєстровані сервіси
-                foreach (var factory in _serviceFactories)
+                // Пропускаємо вже зареєстровані критичні сервіси
+                var criticalTypes = new Type[] {
+                    typeof(UIPanelRegistry),
+                    typeof(UIPanelFactory),
+                    typeof(UIPanelPool),
+                    typeof(UIManager),
+                    typeof(UIButtonRegistry),
+                    typeof(UIButtonFactory),
+                    typeof(UIPanelAnimation),
+                    typeof(UINavigationService)
+                };
+
+                foreach (var factory in _serviceFactories.Where(f => !criticalTypes.Contains(f.Key)))
                 {
                     var service = factory.Value();
                     if (service != null)
@@ -161,37 +177,84 @@ namespace GameCore.Core
                 }
             }
 
-            // Крок 2: Реєструємо всі сервіси
+            // Реєструємо створені сервіси
             foreach (var service in createdServices)
             {
                 await _serviceLocator.RegisterService(service);
 
-                // Якщо сервіс ініціалізований, додаємо його до списку
                 if (service is IInitializable initializable)
                 {
                     RegisterInitializable(initializable);
                 }
             }
 
-            // Крок 3: Спеціальна обробка для сервісів, які потребують додаткової конфігурації
-            ConfigureSpecialServices();
-
-            // Крок 4: Створюємо платформозалежні сервіси
+            // Створюємо платформозалежні сервіси
             await InitializePlatformService();
 
-            // Крок 5: Ініціалізуємо системи вводу
+            // Ініціалізуємо системи вводу
             await InitializePlayerInput();
 
-            // Крок 6: Ініціалізуємо UI-пул (якщо є)
-            await InitializeUIPanelPool();
-
-            // Крок 7: Запускаємо ініціалізацію всіх сервісів у правильному порядку
+            // Запускаємо ініціалізацію всіх сервісів у правильному порядку
             _initializables.Sort((a, b) => b.InitializationPriority.CompareTo(a.InitializationPriority));
             foreach (var init in _initializables.Where(i => !i.IsInitialized))
             {
                 CoreLogger.Log("APP", $"Initializing {init.GetType().Name}...");
                 await init.Initialize();
             }
+
+            // Попереднє завантаження панелей (після ініціалізації всіх сервісів)
+            var uiManager = _serviceLocator.GetService<UIManager>();
+            if (uiManager != null)
+            {
+                await uiManager.PreloadCommonPanels();
+            }
+        }
+
+        // Новий метод для реєстрації критичних UI сервісів у правильному порядку
+        private async Task RegisterCriticalServices()
+        {
+            // Спочатку створюємо і реєструємо реєстр панелей
+            var panelRegistry = CreateService<UIPanelRegistry>();
+            await _serviceLocator.RegisterService(panelRegistry);
+            RegisterInitializable(panelRegistry);
+
+            // Далі створюємо і налаштовуємо фабрику панелей
+            var panelFactory = CreateService<UIPanelFactory>();
+            panelFactory.SetRegistry(panelRegistry);
+            panelFactory.SetPanelRoot(GameObject.Find("UICanvas_Root")?.transform);
+            await _serviceLocator.RegisterService(panelFactory);
+            RegisterInitializable(panelFactory);
+
+            // Реєстр кнопок (UIButtonRegistry)
+            var buttonRegistry = CreateService<UIButtonRegistry>();
+            await _serviceLocator.RegisterService(buttonRegistry);
+            RegisterInitializable(buttonRegistry);
+
+            // Фабрика кнопок (UIButtonFactory)
+            var buttonFactory = CreateService<UIButtonFactory>();
+            buttonFactory.SetButtonPrefabPath("UI/Prefabs/StandardButton");  // Встановлюємо шлях до префабу кнопки
+            await _serviceLocator.RegisterService(buttonFactory);
+            RegisterInitializable(buttonFactory);
+
+            // Створюємо пул панелей (залежить від фабрики)
+            var panelPool = CreateService<UIPanelPool>();
+            await _serviceLocator.RegisterService(panelPool);
+            RegisterInitializable(panelPool);
+
+            // Анімація панелей
+            var panelAnimation = CreateService<UIPanelAnimation>();
+            await _serviceLocator.RegisterService(panelAnimation);
+            RegisterInitializable(panelAnimation);
+
+            // Нарешті, створюємо UIManager
+            var uiManager = CreateService<UIManager>();
+            await _serviceLocator.RegisterService(uiManager);
+            RegisterInitializable(uiManager);
+
+            // UINavigationService має йти після UIManager
+            var navigationService = CreateService<UINavigationService>();
+            await _serviceLocator.RegisterService(navigationService);
+            RegisterInitializable(navigationService);
         }
 
         private async Task InitializeUIPanelPool()

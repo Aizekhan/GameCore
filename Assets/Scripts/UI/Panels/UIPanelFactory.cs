@@ -28,8 +28,23 @@ namespace GameCore.Core
         {
             if (_registry == null)
             {
-                CoreLogger.LogError("UI", "❗ UIPanelRegistry is not assigned to UIPanelFactory.");
-                return;
+                _registry = ServiceLocator.Instance.GetService<UIPanelRegistry>();
+
+                if (_registry == null)
+                {
+                    CoreLogger.LogError("UI", "❗ UIPanelRegistry not found. Trying to create one...");
+
+                    // Спроба створити реєстр
+                    var registryGO = new GameObject("UIPanelRegistry");
+                    registryGO.transform.SetParent(transform.parent);
+                    _registry = registryGO.AddComponent<UIPanelRegistry>();
+
+                    // Реєструємо його в ServiceLocator
+                    await ServiceLocator.Instance.RegisterService(_registry);
+
+                    if (_registry is IInitializable initializable)
+                        await initializable.Initialize();
+                }
             }
 
             if (panelRoot == null)
@@ -39,7 +54,7 @@ namespace GameCore.Core
             }
 
             CoreLogger.Log("UI", "✅ UIPanelFactory initialized.");
-            await Task.CompletedTask;
+            IsInitialized = true;
         }
 
         public UIPanel CreatePanel(string panelName)

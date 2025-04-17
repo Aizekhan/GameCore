@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1437331109794215146}
   - component: {fileID: 8377153626428342321}
+  - component: {fileID: 8854291151893206024}
   - component: {fileID: 6105145960350886462}
   m_Layer: 5
   m_Name: LoadingText
@@ -45,6 +46,55 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1247863943148758163}
   m_CullTransparentMesh: 1
+--- !u!114 &8854291151893206024
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1247863943148758163}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c03ea50c32519de49aa3cba69dce509a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playOnEnable: 1
+  startDelay: 0
+  loopDelay: 0
+  loop: 0
+  destroyOnComplete: 0
+  useScale: 0
+  useRotation: 0
+  usePosition: 0
+  useAlpha: 0
+  useColor: 0
+  fromScale: {x: 0, y: 0, z: 0}
+  toScale: {x: 1, y: 1, z: 1}
+  scaleDuration: 0.5
+  scaleEaseType: 27
+  fromRotation: {x: 0, y: 0, z: 0}
+  toRotation: {x: 0, y: 0, z: 360}
+  rotationDuration: 0.5
+  rotationEaseType: 6
+  fromPosition: {x: 0, y: 0, z: 0}
+  toPosition: {x: 0, y: 0, z: 0}
+  useRelativePosition: 1
+  positionDuration: 0.5
+  positionEaseType: 6
+  fromAlpha: 0
+  toAlpha: 1
+  alphaDuration: 0.5
+  alphaEaseType: 6
+  fromColor: {r: 1, g: 1, b: 1, a: 1}
+  toColor: {r: 1, g: 1, b: 1, a: 1}
+  colorDuration: 0.5
+  colorEaseType: 6
+  onAnimationStart:
+    m_PersistentCalls:
+      m_Calls: []
+  onAnimationComplete:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &6105145960350886462
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -462,12 +512,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 445b21052ae24af4682fe6acb9a23fdc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  showAnimationType: 1
-  hideAnimationType: 1
-  showDuration: -1
-  hideDuration: -1
-  showEaseType: 0
-  hideEaseType: 0
+  canvasGroup: {fileID: 0}
+  panelId: 
 --- !u!225 &-3129498500594771357
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -489,6 +535,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2592987352125152217}
+  - component: {fileID: 8549231356968370045}
   - component: {fileID: 2917047682964369768}
   m_Layer: 5
   m_Name: LoadingBar
@@ -519,6 +566,55 @@ RectTransform:
   m_AnchoredPosition: {x: -28.8, y: 0}
   m_SizeDelta: {x: 160, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &8549231356968370045
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8439301965970720886}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c03ea50c32519de49aa3cba69dce509a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playOnEnable: 1
+  startDelay: 0
+  loopDelay: 0
+  loop: 0
+  destroyOnComplete: 0
+  useScale: 0
+  useRotation: 0
+  usePosition: 0
+  useAlpha: 0
+  useColor: 0
+  fromScale: {x: 0, y: 0, z: 0}
+  toScale: {x: 1, y: 1, z: 1}
+  scaleDuration: 0.5
+  scaleEaseType: 27
+  fromRotation: {x: 0, y: 0, z: 0}
+  toRotation: {x: 0, y: 0, z: 360}
+  rotationDuration: 0.5
+  rotationEaseType: 6
+  fromPosition: {x: 0, y: 0, z: 0}
+  toPosition: {x: 0, y: 0, z: 0}
+  useRelativePosition: 1
+  positionDuration: 0.5
+  positionEaseType: 6
+  fromAlpha: 0
+  toAlpha: 1
+  alphaDuration: 0.5
+  alphaEaseType: 6
+  fromColor: {r: 1, g: 1, b: 1, a: 1}
+  toColor: {r: 1, g: 1, b: 1, a: 1}
+  colorDuration: 0.5
+  colorEaseType: 6
+  onAnimationStart:
+    m_PersistentCalls:
+      m_Calls: []
+  onAnimationComplete:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &2917047682964369768
 MonoBehaviour:
   m_ObjectHideFlags: 0

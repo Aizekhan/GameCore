@@ -22,20 +22,50 @@ namespace GameCore.Core
 
         public async Task Initialize()
         {
+            // Чекаємо, поки UIPanelFactory буде ініціалізовано
             _panelFactory = ServiceLocator.Instance.GetService<UIPanelFactory>();
+
+            while (_panelFactory == null || !(_panelFactory is IInitializable init && init.IsInitialized))
+            {
+                CoreLogger.Log("UI", "Waiting for UIPanelFactory to be initialized...");
+                await Task.Delay(50); // Даємо час для ініціалізації
+                _panelFactory = ServiceLocator.Instance.GetService<UIPanelFactory>();
+
+                // Аварійний вихід якщо щось пішло не так
+                if (_panelFactory == null && await CheckInitializationFailed())
+                    break;
+            }
 
             if (_panelFactory == null)
             {
-                CoreLogger.LogError("UI", "UIPanelPool requires UIPanelFactory to be registered");
+                CoreLogger.LogError("UI", "UIPanelPool initialization failed: UIPanelFactory not available");
                 return;
             }
 
-            // Підписуємось на зміну сцени для управління пулами
+            // Підписуємось на зміну сцени
             UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
 
             IsInitialized = true;
             CoreLogger.Log("UI", "✅ UIPanelPool initialized");
+        }
+
+        private async Task<bool> CheckInitializationFailed()
+        {
+            // Перевірка чи всі сервіси вже ініціалізовані, щоб не чекати вічно
+            var app = GameObject.FindFirstObjectByType<App>();
+            if (app != null)
+            {
+                var initializables = app.GetType().GetField("_initializables",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(app) as List<IInitializable>;
+
+                if (initializables != null)
+                {
+                    // Якщо всі сервіси вже ініціалізовані, а фабрики немає - щось пішло не так
+                    return initializables.All(i => i.IsInitialized);
+                }
+            }
             await Task.CompletedTask;
+            return false;
         }
 
         /// <summary>

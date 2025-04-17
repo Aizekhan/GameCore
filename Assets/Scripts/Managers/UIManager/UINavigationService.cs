@@ -44,17 +44,18 @@ namespace GameCore.Core
 
         public async Task Initialize()
         {
-            // Отримуємо необхідні сервіси
+            // Першочергово очікуємо UIManager
+            _uiManager = ServiceLocator.Instance.GetService<UIManager>();
+            while (_uiManager == null)
+            {
+                await Task.Delay(50);
+                _uiManager = ServiceLocator.Instance.GetService<UIManager>();
+            }
+
+            // Потім завантажуємо інші сервіси
             _panelFactory = ServiceLocator.Instance.GetService<UIPanelFactory>();
             _panelPool = ServiceLocator.Instance.GetService<UIPanelPool>();
             _panelAnimation = ServiceLocator.Instance.GetService<UIPanelAnimation>();
-            _uiManager = ServiceLocator.Instance.GetService<UIManager>();
-
-            if (_panelFactory == null)
-            {
-                CoreLogger.LogError("UI", "UINavigationService: UIPanelFactory not found");
-                return;
-            }
 
             // Підписуємось на події
             EventBus.Subscribe("UI/PanelChanged", OnPanelChanged);
@@ -63,7 +64,6 @@ namespace GameCore.Core
 
             CoreLogger.Log("UI", "🧭 UINavigationService initialized");
             IsInitialized = true;
-            await Task.CompletedTask;
         }
 
         /// <summary>

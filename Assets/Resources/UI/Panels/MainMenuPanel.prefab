@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 5621031984105375863}
   - component: {fileID: 3532471244967832597}
   - component: {fileID: 7385962434269523812}
+  - component: {fileID: 1106887124927555592}
   - component: {fileID: 920621320484427775}
   - component: {fileID: 8574557588958906527}
   m_Layer: 5
@@ -78,6 +79,55 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &1106887124927555592
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1463602475954222304}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c03ea50c32519de49aa3cba69dce509a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playOnEnable: 1
+  startDelay: 0
+  loopDelay: 0
+  loop: 0
+  destroyOnComplete: 0
+  useScale: 0
+  useRotation: 0
+  usePosition: 0
+  useAlpha: 0
+  useColor: 0
+  fromScale: {x: 0, y: 0, z: 0}
+  toScale: {x: 1, y: 1, z: 1}
+  scaleDuration: 0.5
+  scaleEaseType: 27
+  fromRotation: {x: 0, y: 0, z: 0}
+  toRotation: {x: 0, y: 0, z: 360}
+  rotationDuration: 0.5
+  rotationEaseType: 6
+  fromPosition: {x: 0, y: 0, z: 0}
+  toPosition: {x: 0, y: 0, z: 0}
+  useRelativePosition: 1
+  positionDuration: 0.5
+  positionEaseType: 6
+  fromAlpha: 0
+  toAlpha: 1
+  alphaDuration: 0.5
+  alphaEaseType: 6
+  fromColor: {r: 1, g: 1, b: 1, a: 1}
+  toColor: {r: 1, g: 1, b: 1, a: 1}
+  colorDuration: 0.5
+  colorEaseType: 6
+  onAnimationStart:
+    m_PersistentCalls:
+      m_Calls: []
+  onAnimationComplete:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &920621320484427775
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -154,6 +204,7 @@ GameObject:
   - component: {fileID: 1909249679436513776}
   - component: {fileID: 3891712195889883758}
   - component: {fileID: 2210287923449483011}
+  - component: {fileID: 4918301010484382886}
   - component: {fileID: 5130468961957004740}
   - component: {fileID: 3509638624708925504}
   m_Layer: 5
@@ -221,6 +272,55 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &4918301010484382886
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1692346025717999028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c03ea50c32519de49aa3cba69dce509a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playOnEnable: 1
+  startDelay: 0
+  loopDelay: 0
+  loop: 0
+  destroyOnComplete: 0
+  useScale: 0
+  useRotation: 0
+  usePosition: 0
+  useAlpha: 0
+  useColor: 0
+  fromScale: {x: 0, y: 0, z: 0}
+  toScale: {x: 1, y: 1, z: 1}
+  scaleDuration: 0.5
+  scaleEaseType: 27
+  fromRotation: {x: 0, y: 0, z: 0}
+  toRotation: {x: 0, y: 0, z: 360}
+  rotationDuration: 0.5
+  rotationEaseType: 6
+  fromPosition: {x: 0, y: 0, z: 0}
+  toPosition: {x: 0, y: 0, z: 0}
+  useRelativePosition: 1
+  positionDuration: 0.5
+  positionEaseType: 6
+  fromAlpha: 0
+  toAlpha: 1
+  alphaDuration: 0.5
+  alphaEaseType: 6
+  fromColor: {r: 1, g: 1, b: 1, a: 1}
+  toColor: {r: 1, g: 1, b: 1, a: 1}
+  colorDuration: 0.5
+  colorEaseType: 6
+  onAnimationStart:
+    m_PersistentCalls:
+      m_Calls: []
+  onAnimationComplete:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &5130468961957004740
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -297,6 +397,7 @@ GameObject:
   - component: {fileID: 4027182555325253158}
   - component: {fileID: 5203908866833179274}
   - component: {fileID: 6286614027259447313}
+  - component: {fileID: 7767941367673759303}
   - component: {fileID: 5604613183841368562}
   - component: {fileID: 3023577732455156971}
   m_Layer: 5
@@ -364,6 +465,55 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &7767941367673759303
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2955162510641657998}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c03ea50c32519de49aa3cba69dce509a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playOnEnable: 1
+  startDelay: 0
+  loopDelay: 0
+  loop: 0
+  destroyOnComplete: 0
+  useScale: 0
+  useRotation: 0
+  usePosition: 0
+  useAlpha: 0
+  useColor: 0
+  fromScale: {x: 0, y: 0, z: 0}
+  toScale: {x: 1, y: 1, z: 1}
+  scaleDuration: 0.5
+  scaleEaseType: 27
+  fromRotation: {x: 0, y: 0, z: 0}
+  toRotation: {x: 0, y: 0, z: 360}
+  rotationDuration: 0.5
+  rotationEaseType: 6
+  fromPosition: {x: 0, y: 0, z: 0}
+  toPosition: {x: 0, y: 0, z: 0}
+  useRelativePosition: 1
+  positionDuration: 0.5
+  positionEaseType: 6
+  fromAlpha: 0
+  toAlpha: 1
+  alphaDuration: 0.5
+  alphaEaseType: 6
+  fromColor: {r: 1, g: 1, b: 1, a: 1}
+  toColor: {r: 1, g: 1, b: 1, a: 1}
+  colorDuration: 0.5
+  colorEaseType: 6
+  onAnimationStart:
+    m_PersistentCalls:
+      m_Calls: []
+  onAnimationComplete:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &5604613183841368562
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -791,12 +941,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 445b21052ae24af4682fe6acb9a23fdc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  showAnimationType: 1
-  hideAnimationType: 1
-  showDuration: -1
-  hideDuration: -1
-  showEaseType: 0
-  hideEaseType: 0
+  canvasGroup: {fileID: 0}
+  panelId: 
 --- !u!225 &7121825542034243621
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -819,6 +965,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3239912412313110271}
   - component: {fileID: 5816027313587251753}
+  - component: {fileID: 7702689578730008652}
   - component: {fileID: 8171293155147225529}
   m_Layer: 5
   m_Name: TitleText
@@ -857,6 +1004,55 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7245286908561709225}
   m_CullTransparentMesh: 1
+--- !u!114 &7702689578730008652
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7245286908561709225}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c03ea50c32519de49aa3cba69dce509a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playOnEnable: 1
+  startDelay: 0
+  loopDelay: 0
+  loop: 0
+  destroyOnComplete: 0
+  useScale: 0
+  useRotation: 0
+  usePosition: 0
+  useAlpha: 0
+  useColor: 0
+  fromScale: {x: 0, y: 0, z: 0}
+  toScale: {x: 1, y: 1, z: 1}
+  scaleDuration: 0.5
+  scaleEaseType: 27
+  fromRotation: {x: 0, y: 0, z: 0}
+  toRotation: {x: 0, y: 0, z: 360}
+  rotationDuration: 0.5
+  rotationEaseType: 6
+  fromPosition: {x: 0, y: 0, z: 0}
+  toPosition: {x: 0, y: 0, z: 0}
+  useRelativePosition: 1
+  positionDuration: 0.5
+  positionEaseType: 6
+  fromAlpha: 0
+  toAlpha: 1
+  alphaDuration: 0.5
+  alphaEaseType: 6
+  fromColor: {r: 1, g: 1, b: 1, a: 1}
+  toColor: {r: 1, g: 1, b: 1, a: 1}
+  colorDuration: 0.5
+  colorEaseType: 6
+  onAnimationStart:
+    m_PersistentCalls:
+      m_Calls: []
+  onAnimationComplete:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &8171293155147225529
 MonoBehaviour:
   m_ObjectHideFlags: 0
