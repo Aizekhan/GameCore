@@ -24,7 +24,7 @@ namespace GameCore.Core
         [Header("Service Configuration")]
         [SerializeField] private bool autoCreateServices = true;
         [SerializeField] private List<ServiceDescriptor> manualServices = new List<ServiceDescriptor>();
-
+        private UnityEngine.InputSystem.PlayerInput _playerInput;
         private readonly List<IInitializable> _initializables = new();
         private ServiceLocator _serviceLocator;
 
@@ -353,26 +353,40 @@ namespace GameCore.Core
 
         private async Task InitializePlayerInput()
         {
-            var inputAsset = Resources.Load<InputActionAsset>("Input/UIInputActions");
-            if (inputAsset == null)
+            // Створюємо GameObject і додаємо PlayerInput, якщо ще не існує
+            if (_playerInput == null)
             {
-                CoreLogger.LogError("INPUT", "❌ UIInputActions не знайдено в Resources/Input/");
-                return;
+                var go = new GameObject("PlayerInput");
+                go.transform.SetParent(transform);
+
+                _playerInput = go.AddComponent<UnityEngine.InputSystem.PlayerInput>();
             }
 
-            var inputGO = new GameObject("PlayerInput");
-            inputGO.transform.SetParent(transform);
-            var playerInput = inputGO.AddComponent<PlayerInput>();
+            // Завантажуємо InputActionAsset з Resources, якщо не задано
+            if (_playerInput.actions == null)
+            {
+                var inputAsset = Resources.Load<UnityEngine.InputSystem.InputActionAsset>("Input/UIInputActions");
 
-            playerInput.actions = inputAsset;
-            playerInput.defaultControlScheme = "Keyboard&Mouse";
-            playerInput.defaultActionMap = "UI";
+                if (inputAsset == null)
+                {
+                    CoreLogger.LogError("INPUT", "❌ UIInputActions not found in Resources/Input/");
+                    return;
+                }
 
-            var inputManager = ServiceLocator.Instance.GetService<InputSchemeManager>();
-            inputManager.SetPlayerInput(playerInput);
+                _playerInput.actions = inputAsset;
+            }
 
-            await Task.CompletedTask;
+            // Реєструємо сервіс InputSchemeManager, якщо ще не зареєстровано
+            if (!_serviceLocator.HasService<InputSchemeManager>())
+            {
+                var inputSchemeManager = CreateService<InputSchemeManager>();
+                inputSchemeManager.SetPlayerInput(_playerInput);
+
+                await _serviceLocator.RegisterService(inputSchemeManager);
+                RegisterInitializable(inputSchemeManager);
+            }
         }
+
         private T CreateService<T>() where T : MonoBehaviour, IService
         {
             // Створюємо новий GameObject для сервісу
