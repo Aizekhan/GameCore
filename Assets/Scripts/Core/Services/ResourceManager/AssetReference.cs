@@ -51,7 +51,7 @@ namespace GameCore.Core
 
             if (autoLoad)
             {
-              LoadAssetAsync();
+                _ = LoadAssetAsync();
             }
         }
 
@@ -229,7 +229,7 @@ namespace GameCore.Core
 
             if (preloadCount > 0)
             {
-                PreloadAsync(preloadCount);
+                _ = PreloadAsync(preloadCount);
             }
         }
 

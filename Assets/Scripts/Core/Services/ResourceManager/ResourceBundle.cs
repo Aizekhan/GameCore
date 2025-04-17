@@ -169,7 +169,7 @@ namespace GameCore.Core
                 }
             }
 
-            Resources.UnloadUnusedAssets();
+            UnityEngine.Resources.UnloadUnusedAssets();
             _isLoaded = false;
             _loadProgress = 0f;
         }
