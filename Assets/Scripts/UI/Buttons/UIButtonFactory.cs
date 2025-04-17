@@ -1,129 +1,150 @@
-using System;
+п»ї// Assets/Scripts/UI/Buttons/UIButtonFactory.cs
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.Events;
-using GameCore.Core;
-using System.Threading.Tasks;
+using TMPro;
+using GameCore.Core.EventSystem;
 
 namespace GameCore.Core
 {
     /// <summary>
-    /// Фабрика для створення та налаштування UI кнопок
+    /// Р¤Р°Р±СЂРёРєР° РґР»СЏ СЃС‚РІРѕСЂРµРЅРЅСЏ UI РєРЅРѕРїРѕРє
     /// </summary>
     public class UIButtonFactory : MonoBehaviour, IService, IInitializable
     {
-        // Шлях до префабу в Resources
         [SerializeField] private string buttonPrefabPath = "UI/Prefabs/StandardButton";
 
-        // Публічна властивість для отримання шляху
-        public string ButtonPrefabPath => buttonPrefabPath;
-
-        // Реалізація інтерфейсу IInitializable
+        private GameObject _buttonPrefab;
+        private UIButtonRegistry _buttonRegistry;
         public bool IsInitialized { get; private set; }
-        public int InitializationPriority => 50;
-
-        public async Task Initialize()
-        {
-            if (IsInitialized) return;
-
-            // Перевірка наявності префабу
-            var prefab = Resources.Load<GameObject>(buttonPrefabPath);
-            if (prefab == null)
-            {
-                CoreLogger.LogWarning($"Button prefab not found at path: {buttonPrefabPath}");
-            }
-
-            CoreLogger.Log("UIButtonFactory initialized");
-            IsInitialized = true;
-            await Task.CompletedTask;
-        }
-
-        // Створення інтерактивної кнопки
-        public UIButton CreateButton(
-            Transform parentPanel,
-            string buttonName = "New Button",
-            string category = "UserCreated")
-        {
-            // Завантаження префабу з Resources
-            GameObject buttonPrefab = Resources.Load<GameObject>(buttonPrefabPath);
-
-            if (buttonPrefab == null)
-            {
-                CoreLogger.LogError($"Button prefab not found at path: {buttonPrefabPath}");
-                return null;
-            }
-
-            // Створення нової кнопки з префабу
-            GameObject newButtonObject = Instantiate(buttonPrefab, parentPanel);
-            newButtonObject.name = buttonName;
-
-            UIButton newButton = newButtonObject.GetComponent<UIButton>();
-
-            if (newButton == null)
-            {
-                CoreLogger.LogError("UIButton component not found on prefab");
-                Destroy(newButtonObject);
-                return null;
-            }
-
-            // Автоматична реєстрація в ButtonRegistry
-            var registry = ServiceLocator.Instance?.GetService<UIButtonRegistry>();
-            registry?.RegisterButton(newButton, category);
-
-            // Налаштування тексту кнопки
-            var textComponent = newButtonObject.GetComponentInChildren<TMPro.TextMeshProUGUI>();
-
-            if (textComponent != null)
-                textComponent.text = buttonName;
-
-            return newButton;
-        }
-
-        // Метод для зміни шляху кнопки
+        public int InitializationPriority => 60;
         public void SetButtonPrefabPath(string path)
         {
             buttonPrefabPath = path;
         }
 
-        // Створення кнопки з попередньо визначеною дією
-        public UIButton CreateButtonWithAction(
-            Transform parentPanel,
-            string buttonName,
-            UnityAction action,
-            string category = "UserCreated")
+        public async Task Initialize()
         {
-            var button = CreateButton(parentPanel, buttonName, category);
+            // Р—Р°РІР°РЅС‚Р°Р¶СѓС”РјРѕ РїСЂРµС„Р°Р± РєРЅРѕРїРєРё
+            _buttonPrefab = Resources.Load<GameObject>(buttonPrefabPath);
+
+            if (_buttonPrefab == null)
+            {
+                CoreLogger.LogWarning("UI", $"вљ пёЏ Button prefab not found at path: {buttonPrefabPath}");
+            }
+
+            // РћС‚СЂРёРјСѓС”РјРѕ СЂРµС”СЃС‚СЂ РєРЅРѕРїРѕРє
+            _buttonRegistry = ServiceLocator.Instance.GetService<UIButtonRegistry>();
+
+            if (_buttonRegistry == null)
+            {
+                CoreLogger.LogWarning("UI", "вљ пёЏ UIButtonRegistry not found in ServiceLocator");
+            }
+
+            CoreLogger.Log("UI", "вњ… UIButtonFactory initialized");
+            await Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// РЎС‚РІРѕСЂСЋС” РЅРѕРІСѓ РєРЅРѕРїРєСѓ РЅР° РІРєР°Р·Р°РЅРѕРјСѓ С‚СЂР°РЅСЃС„РѕСЂРјС–
+        /// </summary>
+        public UIButton CreateButton(Transform parent, string text, UnityEngine.Events.UnityAction onClick = null, string category = "Default")
+        {
+            if (_buttonPrefab == null)
+            {
+                _buttonPrefab = Resources.Load<GameObject>(buttonPrefabPath);
+
+                if (_buttonPrefab == null)
+                {
+                    CoreLogger.LogError("UI", $"вќЊ Button prefab not found at path: {buttonPrefabPath}");
+                    return null;
+                }
+            }
+
+            // РЎС‚РІРѕСЂСЋС”РјРѕ РєРЅРѕРїРєСѓ
+            GameObject buttonObj = Instantiate(_buttonPrefab, parent);
+            buttonObj.name = $"Button_{text.Replace(" ", "")}";
+
+            // Р’СЃС‚Р°РЅРѕРІР»СЋС”РјРѕ С‚РµРєСЃС‚
+            TextMeshProUGUI tmpText = buttonObj.GetComponentInChildren<TextMeshProUGUI>();
+            if (tmpText != null)
+            {
+                tmpText.text = text;
+            }
+            else
+            {
+                Text legacyText = buttonObj.GetComponentInChildren<Text>();
+                if (legacyText != null)
+                {
+                    legacyText.text = text;
+                }
+            }
+
+            // РћС‚СЂРёРјСѓС”РјРѕ РєРѕРјРїРѕРЅРµРЅС‚ UIButton
+            UIButton uiButton = buttonObj.GetComponent<UIButton>();
+
+            if (uiButton == null)
+            {
+                uiButton = buttonObj.AddComponent<UIButton>();
+            }
+
+            // Р”РѕРґР°С”РјРѕ СЃР»СѓС…Р°С‡Р°
+            if (onClick != null)
+            {
+                uiButton.Button.onClick.AddListener(onClick);
+            }
+
+            // Р РµС”СЃС‚СЂСѓС”РјРѕ РІ СЂРµС”СЃС‚СЂС–
+            if (_buttonRegistry != null)
+            {
+                _buttonRegistry.RegisterButton(uiButton, category);
+            }
+
+            return uiButton;
+        }
+
+        /// <summary>
+        /// РЎС‚РІРѕСЂСЋС” РєРЅРѕРїРєСѓ, С‰Рѕ РІС–РґРєСЂРёРІР°С” РїР°РЅРµР»СЊ
+        /// </summary>
+        public UIButton CreateOpenPanelButton(Transform parent, string text, string panelToOpen, string category = "Navigation")
+        {
+            UIButton button = CreateButton(parent, text, null, category);
 
             if (button != null)
             {
-                button.Button.onClick.AddListener(action);
+                button.showPanelName = panelToOpen;
             }
 
             return button;
         }
 
-        // Додаткові утиліти для спрощення створення кнопок
-        public UIButton CreateLinkButton(Transform parentPanel, string url)
+        /// <summary>
+        /// РЎС‚РІРѕСЂСЋС” РєРЅРѕРїРєСѓ "РЅР°Р·Р°Рґ"
+        /// </summary>
+        public UIButton CreateBackButton(Transform parent, string category = "Navigation")
         {
-            return CreateButtonWithAction(
-                parentPanel,
-                "Open Link",
-                () => Application.OpenURL(url),
-                "Links"
-            );
+            UIButton button = CreateButton(parent, "РќР°Р·Р°Рґ", null, category);
+
+            if (button != null)
+            {
+                // Р’СЃС‚Р°РЅРѕРІР»СЋС”РјРѕ СЏРє РєРЅРѕРїРєСѓ "РЅР°Р·Р°Рґ"
+                button.GetType().GetField("isBackButton", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)?.SetValue(button, true);
+            }
+
+            return button;
         }
 
-        public UIButton CreateSystemButton(
-            Transform parentPanel,
-            string actionName,
-            Action systemAction)
+        /// <summary>
+        /// РЎС‚РІРѕСЂСЋС” РєРЅРѕРїРєСѓ РґР»СЏ Р·Р°РґР°РЅРѕС— РґС–С—
+        /// </summary>
+        public UIButton CreateActionButton(Transform parent, string text, string actionName, string category = "Actions")
         {
-            return CreateButtonWithAction(
-                parentPanel,
-                actionName,
-                () => systemAction?.Invoke(),
-                "System"
-            );
+            UIButton button = CreateButton(parent, text, () => {
+                // Р’С–РґРїСЂР°РІР»СЏС”РјРѕ РїРѕРґС–СЋ С‡РµСЂРµР· EventBus
+                EventBus.Emit($"UI/Action/{actionName}", text);
+            }, category);
+
+            return button;
         }
     }
 }

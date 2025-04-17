@@ -5,16 +5,22 @@ namespace GameCore.Core
 {
     public class SettingsPanel : UIPanel
     {
-        // Метод, який викликається UI-слайдером для зміни музики
-        public void SetMusicVolume(float value)
+        private AudioManager _audioManager;
+
+        protected override void Awake()
         {
-            AudioManager.Instance?.SetVolume(AudioType.Music, value);
+            base.Awake();
+            _audioManager = ServiceLocator.Instance.GetService<AudioManager>();
         }
 
-        // Метод, який викликається UI-слайдером для зміни ефектів
+        public void SetMusicVolume(float value)
+        {
+            _audioManager?.SetVolume(AudioType.Music, value);
+        }
+
         public void SetSfxVolume(float value)
         {
-            AudioManager.Instance?.SetVolume(AudioType.SFX, value);
+            _audioManager?.SetVolume(AudioType.SFX, value);
         }
     }
 }

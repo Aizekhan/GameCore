@@ -1,74 +1,147 @@
-using System;
+п»ї// Assets/Scripts/UI/Buttons/UIButtonRegistry.cs
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Events;
-
 using System.Threading.Tasks;
+using UnityEngine;
+
 namespace GameCore.Core
 {
     /// <summary>
-    /// Централізований реєстр кнопок в додатку
+    /// Р РµС”СЃС‚СЂ РєРЅРѕРїРѕРє UI РґР»СЏ С—С… С†РµРЅС‚СЂР°Р»С–Р·РѕРІР°РЅРѕРіРѕ СѓРїСЂР°РІР»С–РЅРЅСЏ
     /// </summary>
     public class UIButtonRegistry : MonoBehaviour, IService, IInitializable
     {
-        // Колекція всіх кнопок в проекті
-        private Dictionary<string, List<UIButton>> _buttonCategories = new Dictionary<string, List<UIButton>>();
+        private Dictionary<string, List<UIButton>> _buttonsByCategory;
+        private Dictionary<string, UIButton> _buttonsById;
         public bool IsInitialized { get; private set; }
         public int InitializationPriority => 55;
-
-        // Реєстрація кнопки
-        public void RegisterButton(UIButton button, string category = "Default")
-        {
-            if (!_buttonCategories.ContainsKey(category))
-            {
-                _buttonCategories[category] = new List<UIButton>();
-            }
-
-            _buttonCategories[category].Add(button);
-
-            // Логування реєстрації
-            CoreLogger.Log($"Button registered: {button.name} in category {category}");
-        }
-
-        // Отримання всіх кнопок певної категорії
-        public List<UIButton> GetButtonsByCategory(string category)
-        {
-            return _buttonCategories.ContainsKey(category)
-                ? _buttonCategories[category]
-                : new List<UIButton>();
-        }
-
-        // Ініціалізація сервісу
-  
-
         public async Task Initialize()
         {
-            if (IsInitialized) return;
+            _buttonsByCategory = new Dictionary<string, List<UIButton>>();
+            _buttonsById = new Dictionary<string, UIButton>();
 
-            CoreLogger.Log("UIButtonRegistry initialized");
-            IsInitialized = true;
-
+            CoreLogger.Log("UI", "вњ… UIButtonRegistry initialized");
             await Task.CompletedTask;
         }
 
-        // Деініціалізація та очищення
-        public void ClearCategory(string category)
+        /// <summary>
+        /// Р РµС”СЃС‚СЂСѓС” РєРЅРѕРїРєСѓ РІ СЃРёСЃС‚РµРјС–
+        /// </summary>
+        public void RegisterButton(UIButton button, string category = "Default")
         {
-            if (_buttonCategories.ContainsKey(category))
+            if (button == null) return;
+
+            string buttonId = button.gameObject.name;
+
+            // Р”РѕРґР°С”РјРѕ РґРѕ РєР°С‚РµРіРѕСЂС–С—
+            if (!_buttonsByCategory.ContainsKey(category))
             {
-                _buttonCategories[category].Clear();
-                CoreLogger.Log($"Cleared buttons in category: {category}");
+                _buttonsByCategory[category] = new List<UIButton>();
+            }
+
+            if (!_buttonsByCategory[category].Contains(button))
+            {
+                _buttonsByCategory[category].Add(button);
+            }
+
+            // Р”РѕРґР°С”РјРѕ РґРѕ СЃР»РѕРІРЅРёРєСѓ Р·Р° ID
+            if (!_buttonsById.ContainsKey(buttonId))
+            {
+                _buttonsById[buttonId] = button;
+            }
+            else
+            {
+                // РЇРєС‰Рѕ РєРЅРѕРїРєР° Р· С‚Р°РєРёРј ID РІР¶Рµ С”, РѕРЅРѕРІР»СЋС”РјРѕ РїРѕСЃРёР»Р°РЅРЅСЏ
+                _buttonsById[buttonId] = button;
             }
         }
 
-        // Пошук кнопки за іменем
-        public UIButton FindButtonByName(string buttonName, string category = "Default")
+        /// <summary>
+        /// Р—РЅР°С…РѕРґРёС‚СЊ РєРЅРѕРїРєСѓ Р·Р° С—С— ID (С–Рј'СЏРј)
+        /// </summary>
+        public UIButton GetButtonById(string buttonId)
         {
-            if (_buttonCategories.TryGetValue(category, out var buttons))
+            if (_buttonsById.TryGetValue(buttonId, out UIButton button))
             {
-                return buttons.Find(btn => btn.name == buttonName);
+                return button;
             }
+
             return null;
+        }
+
+        /// <summary>
+        /// РћС‚СЂРёРјСѓС” РІСЃС– РєРЅРѕРїРєРё РІ РєР°С‚РµРіРѕСЂС–С—
+        /// </summary>
+        public List<UIButton> GetButtonsByCategory(string category = "Default")
+        {
+            if (_buttonsByCategory.TryGetValue(category, out List<UIButton> buttons))
+            {
+                return buttons;
+            }
+
+            return new List<UIButton>();
+        }
+
+        /// <summary>
+        /// Р—РјС–РЅСЋС” СЃС‚Р°РЅ С–РЅС‚РµСЂР°РєС‚РёРІРЅРѕСЃС‚С– РґР»СЏ РІСЃС–С… РєРЅРѕРїРѕРє Сѓ РєР°С‚РµРіРѕСЂС–С—
+        /// </summary>
+        public void SetCategoryInteractable(string category, bool interactable)
+        {
+            if (!_buttonsByCategory.ContainsKey(category)) return;
+
+            foreach (var button in _buttonsByCategory[category])
+            {
+                if (button != null && button.Button != null)
+                {
+                    button.Button.interactable = interactable;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Р”РѕРґР°С” РґС–СЋ РґРѕ РІСЃС–С… РєРЅРѕРїРѕРє Сѓ РєР°С‚РµРіРѕСЂС–С—
+        /// </summary>
+        public void AddActionToCategory(string category, UnityEngine.Events.UnityAction action)
+        {
+            if (!_buttonsByCategory.ContainsKey(category)) return;
+
+            foreach (var button in _buttonsByCategory[category])
+            {
+                if (button != null)
+                {
+                    button.AddCustomAction(action);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Р’РёРґР°Р»СЏС” РєРЅРѕРїРєСѓ Р· СЂРµС”СЃС‚СЂСѓ
+        /// </summary>
+        public void UnregisterButton(UIButton button)
+        {
+            if (button == null) return;
+
+            string buttonId = button.gameObject.name;
+
+            // Р’РёРґР°Р»СЏС”РјРѕ Р· СЃР»РѕРІРЅРёРєР° Р·Р° ID
+            if (_buttonsById.ContainsKey(buttonId))
+            {
+                _buttonsById.Remove(buttonId);
+            }
+
+            // Р’РёРґР°Р»СЏС”РјРѕ Р· РєР°С‚РµРіРѕСЂС–Р№
+            foreach (var category in _buttonsByCategory.Keys)
+            {
+                _buttonsByCategory[category].Remove(button);
+            }
+        }
+
+        /// <summary>
+        /// РЎРєРёРґР°С” РІРµСЃСЊ СЂРµС”СЃС‚СЂ
+        /// </summary>
+        public void Reset()
+        {
+            _buttonsByCategory.Clear();
+            _buttonsById.Clear();
         }
     }
 }

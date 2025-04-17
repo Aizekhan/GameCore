@@ -38,8 +38,32 @@ namespace GameCore.Core
 
             Instance = this;
 
+            EnsureUI();
             StartCoroutine(LoadTargetScene());
             StartCoroutine(AnimateLoadingDots());
+        }
+
+        private void EnsureUI()
+        {
+            if (loadingText == null)
+            {
+                var textGO = new GameObject("LoadingText");
+                textGO.transform.SetParent(transform);
+                loadingText = textGO.AddComponent<TextMeshProUGUI>();
+                loadingText.text = "Завантаження";
+                loadingText.alignment = TextAlignmentOptions.Center;
+                loadingText.fontSize = 36;
+            }
+
+            if (loadingBar == null)
+            {
+                var sliderGO = new GameObject("LoadingBar");
+                sliderGO.transform.SetParent(transform);
+                loadingBar = sliderGO.AddComponent<Slider>();
+                loadingBar.minValue = 0;
+                loadingBar.maxValue = 1;
+                loadingBar.value = 0;
+            }
         }
 
         public async Task Initialize()
@@ -102,10 +126,7 @@ namespace GameCore.Core
             }
 
             EventBus.Emit("Scene/LoadingCompleted", sceneName);
-
-            // ⛔ Очистка підписників старої сцени
             EventBus.UnsubscribeCategory("Scene/");
-
             _isLoading = false;
         }
 
@@ -118,19 +139,23 @@ namespace GameCore.Core
 
             while (asyncOp.progress < 0.9f)
             {
-                loadingBar.value = asyncOp.progress;
+                if (loadingBar != null)
+                {
+                    loadingBar.value = asyncOp.progress;
+                }
                 EventBus.Emit("Scene/LoadingProgress", asyncOp.progress);
                 yield return null;
             }
 
-            loadingBar.value = 1f;
+            if (loadingBar != null)
+            {
+                loadingBar.value = 1f;
+            }
             EventBus.Emit("Scene/LoadingProgress", 1f);
             yield return new WaitForSeconds(0.5f);
             asyncOp.allowSceneActivation = true;
 
             EventBus.Emit("Scene/LoadingCompleted", sceneToLoad);
-
-            // ⛔ Очистка всіх Scene-подій
             EventBus.UnsubscribeCategory("Scene/");
         }
 

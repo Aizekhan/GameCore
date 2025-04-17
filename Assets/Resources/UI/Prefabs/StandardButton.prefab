@@ -150,7 +150,7 @@ GameObject:
   - component: {fileID: 7523969206782368489}
   - component: {fileID: 869370970362481475}
   m_Layer: 5
-  m_Name: "[\u2192 SetiingPanel] StandardButton"
+  m_Name: '[SetiingPanel] StandardButton'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

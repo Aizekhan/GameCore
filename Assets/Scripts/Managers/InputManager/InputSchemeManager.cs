@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿// Clean version of InputSchemeManager.cs — no auto-creation, no Resources.Load, only external setup
+using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
 using System.Threading.Tasks;
@@ -12,7 +13,7 @@ namespace GameCore.Core
         public int InitializationPriority => 40;
 
         [Header("Player Input Reference")]
-        [SerializeField] private PlayerInput playerInput;
+        [SerializeField] private PlayerInput _playerInput;
 
         [Header("Current Info (ReadOnly)")]
         [SerializeField] private string currentControlScheme;
@@ -20,7 +21,7 @@ namespace GameCore.Core
 
         public event Action<string> OnControlSchemeChanged;
         public event Action<string> OnActionMapSwitched;
-        public InputActionAsset actions => playerInput?.actions;
+        public InputActionAsset actions => _playerInput?.actions;
 
         private void Awake()
         {
@@ -31,21 +32,20 @@ namespace GameCore.Core
             }
 
             Instance = this;
-
-            if (playerInput == null)
-                playerInput = FindFirstObjectByType<PlayerInput>();
-
-            if (playerInput != null)
-            {
-                currentControlScheme = playerInput.currentControlScheme;
-                currentActionMap = playerInput.currentActionMap.name;
-                playerInput.onControlsChanged += OnControlsChanged;
-            }
-            else
-            {
-                CoreLogger.LogError("INPUT", "PlayerInput not assigned or not found.");
-            }
         }
+
+        public void SetPlayerInput(PlayerInput playerInput)
+        {
+            if (playerInput == null)
+            {
+                CoreLogger.LogError("INPUT", "❌ PlayerInput is null!");
+                return;
+            }
+
+            this._playerInput = playerInput;
+            CoreLogger.Log("INPUT", $"✅ PlayerInput linked: {playerInput.gameObject.name}");
+        }
+
         public async Task Initialize()
         {
             CoreLogger.Log("INPUT", "InputSchemeManager initialized via IService");
@@ -54,8 +54,8 @@ namespace GameCore.Core
 
         private void OnDestroy()
         {
-            if (playerInput != null)
-                playerInput.onControlsChanged -= OnControlsChanged;
+            if (_playerInput != null)
+                _playerInput.onControlsChanged -= OnControlsChanged;
         }
 
         private void OnControlsChanged(PlayerInput input)
@@ -67,11 +67,11 @@ namespace GameCore.Core
 
         public void SwitchToUI()
         {
-            if (playerInput == null) return;
+            if (_playerInput == null) return;
 
-            if (playerInput.currentActionMap.name != "UI")
+            if (_playerInput.currentActionMap.name != "UI")
             {
-                playerInput.SwitchCurrentActionMap("UI");
+                _playerInput.SwitchCurrentActionMap("UI");
                 currentActionMap = "UI";
                 CoreLogger.Log("INPUT", "🧭 Switched to UI Input Map");
                 OnActionMapSwitched?.Invoke("UI");
@@ -80,11 +80,11 @@ namespace GameCore.Core
 
         public void SwitchToGameplay()
         {
-            if (playerInput == null) return;
+            if (_playerInput == null) return;
 
-            if (playerInput.currentActionMap.name != "Gameplay")
+            if (_playerInput.currentActionMap.name != "Gameplay")
             {
-                playerInput.SwitchCurrentActionMap("Gameplay");
+                _playerInput.SwitchCurrentActionMap("Gameplay");
                 currentActionMap = "Gameplay";
                 CoreLogger.Log("INPUT", "🎮 Switched to Gameplay Input Map");
                 OnActionMapSwitched?.Invoke("Gameplay");

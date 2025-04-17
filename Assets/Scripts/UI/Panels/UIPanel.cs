@@ -1,101 +1,153 @@
 // Assets/Scripts/UI/Components/UIPanel.cs
-using UnityEngine;
-using UnityEngine.UI;
 using System.Threading.Tasks;
+using UnityEngine;
 using GameCore.Core.EventSystem;
+using UnityEngine.UI;
+
 namespace GameCore.Core
 {
+    /// <summary>
+    /// Базовий клас для всіх UI панелей
+    /// </summary>
     [RequireComponent(typeof(CanvasGroup))]
-    public abstract class UIPanel : MonoBehaviour, IUIPanel
+    public class UIPanel : MonoBehaviour, IUIPanel
     {
-        [SerializeField] protected string panelName;
-        protected CanvasGroup canvasGroup;
+        [Header("Animation Settings")]
+        [SerializeField] private UIPanelAnimationType showAnimationType = UIPanelAnimationType.Default;
+        [SerializeField] private UIPanelAnimationType hideAnimationType = UIPanelAnimationType.Default;
+        [SerializeField] private float showDuration = -1f; // -1 = використовувати стандартне значення
+        [SerializeField] private float hideDuration = -1f; // -1 = використовувати стандартне значення
+        [SerializeField] private LeanTweenType showEaseType = LeanTweenType.notUsed; // notUsed = використовувати стандартне значення
+        [SerializeField] private LeanTweenType hideEaseType = LeanTweenType.notUsed; // notUsed = використовувати стандартне значення
 
-        // IUIPanel implementation
-        public string PanelName => string.IsNullOrEmpty(panelName) ? gameObject.name : panelName;
-        public bool IsActive => canvasGroup.alpha > 0 && canvasGroup.interactable;
+        protected CanvasGroup canvasGroup;
+        protected RectTransform rectTransform;
+        protected bool isVisible = false;
+
+        public bool IsVisible => isVisible;
 
         protected virtual void Awake()
         {
             canvasGroup = GetComponent<CanvasGroup>();
+            rectTransform = GetComponent<RectTransform>();
 
-            // Якщо панель не має імені, використовуємо ім'я GameObject
-            if (string.IsNullOrEmpty(panelName))
-            {
-                panelName = gameObject.name;
-            }
-        }
-
-        public virtual void Show()
-        {
-            gameObject.SetActive(true);
-            canvasGroup.alpha = 1;
-            canvasGroup.interactable = true;
-            canvasGroup.blocksRaycasts = true;
-
-            CoreLogger.Log("UI", $"Panel shown: {PanelName}");
-
-            // Сповіщаємо про зміну стану панелі
-            EventBus.Emit("UI/PanelShown", PanelName);
-        }
-
-        public virtual void Hide()
-        {
-            canvasGroup.alpha = 0;
-            canvasGroup.interactable = false;
+            // Початково приховуємо панель
+            canvasGroup.alpha = 0f;
             canvasGroup.blocksRaycasts = false;
-
-            CoreLogger.Log("UI", $"Panel hidden: {PanelName}");
-
-            // Сповіщаємо про зміну стану панелі
-            EventBus.Emit("UI/PanelHidden", PanelName);
-        }
-
-        public virtual async Task ShowAnimated(float duration = 0.25f)
-        {
-            gameObject.SetActive(true);
-            canvasGroup.interactable = true;
-            canvasGroup.blocksRaycasts = true;
-
-            float startTime = Time.time;
-            canvasGroup.alpha = 0;
-
-            while (Time.time - startTime < duration)
-            {
-                float normalizedTime = (Time.time - startTime) / duration;
-                canvasGroup.alpha = normalizedTime;
-                await Task.Yield();
-            }
-
-            canvasGroup.alpha = 1;
-
-            CoreLogger.Log("UI", $"Panel shown with animation: {PanelName}");
-
-            // Сповіщаємо про зміну стану панелі
-            EventBus.Emit("UI/PanelShown", PanelName);
-        }
-
-        public virtual async Task HideAnimated(float duration = 0.25f)
-        {
             canvasGroup.interactable = false;
-            canvasGroup.blocksRaycasts = false;
+            isVisible = false;
+        }
 
-            float startTime = Time.time;
-            canvasGroup.alpha = 1;
+        /// <summary>
+        /// Відображає панель з анімацією
+        /// </summary>
+        public virtual async Task Show()
+        {
+            // Переконуємося, що компоненти ініціалізовані
+            if (canvasGroup == null) canvasGroup = GetComponent<CanvasGroup>();
+            if (rectTransform == null) rectTransform = GetComponent<RectTransform>();
 
-            while (Time.time - startTime < duration)
+            // Робимо панель інтерактивною
+            canvasGroup.blocksRaycasts = true;
+            canvasGroup.interactable = true;
+
+            // Запускаємо анімацію
+            if (UIPanelAnimation.Instance != null)
             {
-                float normalizedTime = 1 - (Time.time - startTime) / duration;
-                canvasGroup.alpha = normalizedTime;
-                await Task.Yield();
+                await UIPanelAnimation.Instance.AnimateShow(
+                    rectTransform, canvasGroup,
+                    showAnimationType, showDuration, showEaseType);
+            }
+            else
+            {
+                // Якщо анімацій немає, просто відображаємо панель
+                canvasGroup.alpha = 1f;
             }
 
-            canvasGroup.alpha = 0;
+            OnShow();
+            isVisible = true;
 
-            CoreLogger.Log("UI", $"Panel hidden with animation: {PanelName}");
+            // Відправляємо подію про відображення панелі
+            EventBus.Emit("UI/PanelShown", gameObject.name);
+        }
 
-            // Сповіщаємо про зміну стану панелі
-            EventBus.Emit("UI/PanelHidden", PanelName);
+        /// <summary>
+        /// Приховує панель з анімацією
+        /// </summary>
+        public virtual async Task Hide()
+        {
+            // Перевіряємо, чи панель видима
+            if (!isVisible)
+                return;
+
+            // Запускаємо анімацію
+            if (UIPanelAnimation.Instance != null)
+            {
+                await UIPanelAnimation.Instance.AnimateHide(
+                    rectTransform, canvasGroup,
+                    hideAnimationType, hideDuration, hideEaseType);
+            }
+            else
+            {
+                // Якщо анімацій немає, просто приховуємо панель
+                canvasGroup.alpha = 0f;
+            }
+
+            // Робимо панель неінтерактивною
+            canvasGroup.blocksRaycasts = false;
+            canvasGroup.interactable = false;
+
+            OnHide();
+            isVisible = false;
+
+            // Відправляємо подію про приховання панелі
+            EventBus.Emit("UI/PanelHidden", gameObject.name);
+        }
+
+        /// <summary>
+        /// Викликається після того, як панель стала видимою
+        /// </summary>
+        protected virtual void OnShow()
+        {
+            CoreLogger.Log("UI", $"Panel {gameObject.name} shown");
+        }
+
+        /// <summary>
+        /// Викликається після того, як панель була прихована
+        /// </summary>
+        protected virtual void OnHide()
+        {
+            CoreLogger.Log("UI", $"Panel {gameObject.name} hidden");
+        }
+
+        /// <summary>
+        /// Реєструє панель у UIPanelRegistry при створенні
+        /// </summary>
+        private void Start()
+        {
+            if (ServiceLocator.Instance != null && ServiceLocator.Instance.HasService<UIPanelRegistry>())
+            {
+                var registry = ServiceLocator.Instance.GetService<UIPanelRegistry>();
+                registry.RegisterPanel(gameObject.name, gameObject);
+            }
+        }
+
+        /// <summary>
+        /// Змінює тип анімації панелі під час виконання
+        /// </summary>
+        public void SetAnimationType(UIPanelAnimationType showType, UIPanelAnimationType hideType)
+        {
+            showAnimationType = showType;
+            hideAnimationType = hideType;
+        }
+
+        /// <summary>
+        /// Змінює тривалості анімацій панелі під час виконання
+        /// </summary>
+        public void SetAnimationDurations(float showDuration, float hideDuration)
+        {
+            this.showDuration = showDuration;
+            this.hideDuration = hideDuration;
         }
     }
 }

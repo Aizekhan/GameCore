@@ -4,38 +4,33 @@ using System.Threading.Tasks;
 namespace GameCore.Core
 {
     /// <summary>
-    /// Інтерфейс для всіх UI панелей. Визначає базові методи управління панеллю.
+    /// Базовий інтерфейс для всіх UI панелей
     /// </summary>
     public interface IUIPanel
     {
         /// <summary>
-        /// Унікальне ім'я панелі
+        /// Показує панель (з анімацією, якщо доступно)
         /// </summary>
-        string PanelName { get; }
+        Task Show();
 
         /// <summary>
-        /// Визначає, чи панель активна (видима)
+        /// Приховує панель (з анімацією, якщо доступно)
         /// </summary>
-        bool IsActive { get; }
+        Task Hide();
 
         /// <summary>
-        /// Показує панель негайно
+        /// Чи видима панель зараз
         /// </summary>
-        void Show();
+        bool IsVisible { get; }
 
         /// <summary>
-        /// Приховує панель негайно
+        /// Встановлює тип анімації для показу/приховання
         /// </summary>
-        void Hide();
+        void SetAnimationType(UIPanelAnimationType showType, UIPanelAnimationType hideType);
 
         /// <summary>
-        /// Показує панель з анімацією
+        /// Встановлює тривалості анімацій
         /// </summary>
-        Task ShowAnimated(float duration = 0.25f);
-
-        /// <summary>
-        /// Приховує панель з анімацією
-        /// </summary>
-        Task HideAnimated(float duration = 0.25f);
+        void SetAnimationDurations(float showDuration, float hideDuration);
     }
 }

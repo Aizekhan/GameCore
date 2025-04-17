@@ -424,6 +424,7 @@ GameObject:
   - component: {fileID: 7008751082569204154}
   - component: {fileID: 1044447468277809349}
   - component: {fileID: 894948903267933871}
+  - component: {fileID: 1553397452320464338}
   - component: {fileID: 5936677053260181771}
   m_Layer: 5
   m_Name: SettingsPanel
@@ -504,6 +505,24 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &1553397452320464338
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2643255325894871721}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 445b21052ae24af4682fe6acb9a23fdc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  showAnimationType: 1
+  hideAnimationType: 1
+  showDuration: -1
+  hideDuration: -1
+  showEaseType: 0
+  hideEaseType: 0
 --- !u!114 &5936677053260181771
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -516,7 +535,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e0cc32d2bb2a9d4e8da5857d7602e60, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  panelName: 
+  showAnimationType: 1
+  hideAnimationType: 1
+  showDuration: -1
+  hideDuration: -1
+  showEaseType: 0
+  hideEaseType: 0
 --- !u!1 &3158178135828986103
 GameObject:
   m_ObjectHideFlags: 0
