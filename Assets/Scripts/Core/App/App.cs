@@ -134,6 +134,7 @@ namespace GameCore.Core
 
         private async Task InitializeAllServices()
         {
+            CoreLogger.Log("InitializeAllServices started!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             // Створюємо і реєструємо критичні сервіси в правильному порядку
             await RegisterCriticalServices();
 
@@ -213,49 +214,96 @@ namespace GameCore.Core
         // Новий метод для реєстрації критичних UI сервісів у правильному порядку
         private async Task RegisterCriticalServices()
         {
-            // Спочатку створюємо і реєструємо реєстр панелей
-            var panelRegistry = CreateService<UIPanelRegistry>();
-            await _serviceLocator.RegisterService(panelRegistry);
-            RegisterInitializable(panelRegistry);
+            if (!_serviceLocator.HasService<UIPanelRegistry>())
+            {
+                var panelRegistry = CreateService<UIPanelRegistry>();
+                await _serviceLocator.RegisterService(panelRegistry);
+                RegisterInitializable(panelRegistry);
+            }
 
-            // Далі створюємо і налаштовуємо фабрику панелей
-            var panelFactory = CreateService<UIPanelFactory>();
-            panelFactory.SetRegistry(panelRegistry);
-            panelFactory.SetPanelRoot(GameObject.Find("UICanvas_Root")?.transform);
-            await _serviceLocator.RegisterService(panelFactory);
-            RegisterInitializable(panelFactory);
+            if (!_serviceLocator.HasService<UIPanelFactory>())
+            {
+                var panelFactory = CreateService<UIPanelFactory>();
+                panelFactory.SetRegistry(_serviceLocator.GetService<UIPanelRegistry>());
+                panelFactory.SetPanelRoot(GameObject.Find("UICanvas_Root")?.transform);
+                await _serviceLocator.RegisterService(panelFactory);
+                RegisterInitializable(panelFactory);
+            }
 
-            // Реєстр кнопок (UIButtonRegistry)
-            var buttonRegistry = CreateService<UIButtonRegistry>();
-            await _serviceLocator.RegisterService(buttonRegistry);
-            RegisterInitializable(buttonRegistry);
+            if (!_serviceLocator.HasService<UIButtonRegistry>())
+            {
+                var buttonRegistry = CreateService<UIButtonRegistry>();
+                await _serviceLocator.RegisterService(buttonRegistry);
+                RegisterInitializable(buttonRegistry);
+            }
 
-            // Фабрика кнопок (UIButtonFactory)
-            var buttonFactory = CreateService<UIButtonFactory>();
-            buttonFactory.SetButtonPrefabPath("UI/Prefabs/StandardButton");  // Встановлюємо шлях до префабу кнопки
-            await _serviceLocator.RegisterService(buttonFactory);
-            RegisterInitializable(buttonFactory);
+            if (!_serviceLocator.HasService<UIButtonFactory>())
+            {
+                var buttonFactory = CreateService<UIButtonFactory>();
+                buttonFactory.SetButtonPrefabPath("UI/Prefabs/StandardButton");
+                await _serviceLocator.RegisterService(buttonFactory);
+                RegisterInitializable(buttonFactory);
+            }
 
-            // Створюємо пул панелей (залежить від фабрики)
-            var panelPool = CreateService<UIPanelPool>();
-            await _serviceLocator.RegisterService(panelPool);
-            RegisterInitializable(panelPool);
+            if (!_serviceLocator.HasService<UIPanelPool>())
+            {
+                var panelPool = CreateService<UIPanelPool>();
+                await _serviceLocator.RegisterService(panelPool);
+                RegisterInitializable(panelPool);
+            }
 
-            // Анімація панелей
-            var panelAnimation = CreateService<UIPanelAnimation>();
-            await _serviceLocator.RegisterService(panelAnimation);
-            RegisterInitializable(panelAnimation);
+            if (!_serviceLocator.HasService<UIPanelAnimation>())
+            {
+                var panelAnimation = CreateService<UIPanelAnimation>();
+                await _serviceLocator.RegisterService(panelAnimation);
+                RegisterInitializable(panelAnimation);
+            }
 
-            // Нарешті, створюємо UIManager
-            var uiManager = CreateService<UIManager>();
-            await _serviceLocator.RegisterService(uiManager);
-            RegisterInitializable(uiManager);
+            if (!_serviceLocator.HasService<UIManager>())
+            {
+                var uiManager = CreateService<UIManager>();
+                await _serviceLocator.RegisterService(uiManager);
+                RegisterInitializable(uiManager);
+            }
 
-            // UINavigationService має йти після UIManager
-            var navigationService = CreateService<UINavigationService>();
-            await _serviceLocator.RegisterService(navigationService);
-            RegisterInitializable(navigationService);
+            if (!_serviceLocator.HasService<UINavigationService>())
+            {
+                var navigationService = CreateService<UINavigationService>();
+                await _serviceLocator.RegisterService(navigationService);
+                RegisterInitializable(navigationService);
+            }
+
+            // --- Додані 3 критичні сервіси нижче ---
+
+            if (!_serviceLocator.HasService<AppStateManager>())
+            {
+                var appStateManager = CreateService<AppStateManager>();
+                await _serviceLocator.RegisterService(appStateManager);
+                RegisterInitializable(appStateManager);
+            }
+
+            if (!_serviceLocator.HasService<InputSchemeManager>())
+            {
+                var inputManager = CreateService<InputSchemeManager>();
+                await _serviceLocator.RegisterService(inputManager);
+                RegisterInitializable(inputManager);
+            }
+
+            if (!_serviceLocator.HasService<SceneLoader>())
+            {
+                var sceneLoader = CreateService<SceneLoader>();
+                await _serviceLocator.RegisterService(sceneLoader);
+                RegisterInitializable(sceneLoader);
+            }
+
+            if (!_serviceLocator.HasService<AudioManager>())
+            {
+                var audioManager = CreateService<AudioManager>();
+                await _serviceLocator.RegisterService(audioManager);
+                RegisterInitializable(audioManager);
+            }
         }
+
 
         private async Task InitializeUIPanelPool()
         {
@@ -305,21 +353,26 @@ namespace GameCore.Core
 
         private async Task InitializePlayerInput()
         {
-            // Отримуємо InputSchemeManager
-            var inputManager = _serviceLocator.GetService<InputSchemeManager>();
-            if (inputManager == null) return;
+            var inputAsset = Resources.Load<InputActionAsset>("Input/UIInputActions");
+            if (inputAsset == null)
+            {
+                CoreLogger.LogError("INPUT", "❌ UIInputActions не знайдено в Resources/Input/");
+                return;
+            }
 
-            // Створюємо PlayerInput
             var inputGO = new GameObject("PlayerInput");
-            inputGO.transform.SetParent(transform, false);
+            inputGO.transform.SetParent(transform);
             var playerInput = inputGO.AddComponent<PlayerInput>();
+
             playerInput.actions = inputAsset;
             playerInput.defaultControlScheme = "Keyboard&Mouse";
+            playerInput.defaultActionMap = "UI";
+
+            var inputManager = ServiceLocator.Instance.GetService<InputSchemeManager>();
             inputManager.SetPlayerInput(playerInput);
 
             await Task.CompletedTask;
         }
-
         private T CreateService<T>() where T : MonoBehaviour, IService
         {
             // Створюємо новий GameObject для сервісу

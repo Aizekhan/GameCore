@@ -44,6 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 39b6e871614ea4e47a69c40fc1176399, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mainMenuSceneName: MainMenu
-  automaticallyLoadMainMenu: 1
+  automaticallyLoadMainMenu: 0
   inputAsset: {fileID: -944628639613478452, guid: 8e4564c579107f54bb0a3c55a056f2b6, type: 3}
+  autoCreateServices: 1
+  manualServices: []

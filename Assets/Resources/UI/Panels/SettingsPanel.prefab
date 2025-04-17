@@ -567,7 +567,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 445b21052ae24af4682fe6acb9a23fdc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  canvasGroup: {fileID: 0}
+  showAnimationType: 1
+  hideAnimationType: 1
+  showDuration: -1
+  hideDuration: -1
+  showEaseType: 0
+  hideEaseType: 0
   panelId: 
 --- !u!114 &5936677053260181771
 MonoBehaviour:
@@ -581,7 +586,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e0cc32d2bb2a9d4e8da5857d7602e60, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  canvasGroup: {fileID: 0}
+  showAnimationType: 1
+  hideAnimationType: 1
+  showDuration: -1
+  hideDuration: -1
+  showEaseType: 0
+  hideEaseType: 0
   panelId: 
 --- !u!1 &3158178135828986103
 GameObject:

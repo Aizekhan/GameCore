@@ -941,7 +941,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 445b21052ae24af4682fe6acb9a23fdc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  canvasGroup: {fileID: 0}
+  showAnimationType: 1
+  hideAnimationType: 1
+  showDuration: -1
+  hideDuration: -1
+  showEaseType: 0
+  hideEaseType: 0
   panelId: 
 --- !u!225 &7121825542034243621
 CanvasGroup:
