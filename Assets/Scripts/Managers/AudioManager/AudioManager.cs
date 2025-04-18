@@ -680,13 +680,10 @@ namespace GameCore.Core
 
             if (source != null)
             {
-                // Налаштовуємо параметри
-                source.clip = clip;
-                source.volume = volume;
                 source.pitch = pitch;
 
-                // Підключаємо до міксера, якщо потрібно
-                if (audioMixer != null && audioType != AudioType.UI) // для UI джерела вже налаштовано
+                // Підключаємо до міксера, якщо потрібно (SFX/Ambient)
+                if (audioMixer != null && audioType != AudioType.UI)
                 {
                     string groupName = audioType == AudioType.Ambient ? "Ambient" : "SFX";
                     AudioMixerGroup[] mixerGroups = audioMixer.FindMatchingGroups(groupName);
@@ -696,8 +693,8 @@ namespace GameCore.Core
                     }
                 }
 
-                // Відтворюємо звук
-                source.Play();
+                // Відтворюємо звук через PlayOneShot
+                source.PlayOneShot(clip, volume);
             }
         }
 
