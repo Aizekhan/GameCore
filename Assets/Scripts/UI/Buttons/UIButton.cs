@@ -15,7 +15,7 @@ namespace GameCore.Core
         [SerializeField] private string buttonCategory = "Default";
 
         [Header("Навігація")]
-        [SerializeField] private bool isBackButton = false;
+        [SerializeField] public bool isBackButton = false;
         [SerializeField] public string showPanelName = "";
 
         [Header("Аудіо")]

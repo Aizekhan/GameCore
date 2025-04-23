@@ -93,5 +93,15 @@ namespace GameCore.Core
                 CoreLogger.Log("UI", "Panel registry cleared");
             }
         }
+
+        public string[] GetAllRegisteredPanelNames()
+        {
+            if (_panelMap == null)
+                return new string[0];
+
+            string[] panelNames = new string[_panelMap.Count];
+            _panelMap.Keys.CopyTo(panelNames, 0);
+            return panelNames;
+        }
     }
 }
